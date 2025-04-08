@@ -12,8 +12,12 @@ import lombok.Generated;
 @Generated
 @Data
 public class BankTransfer extends PaymentMethod {
+    private String accountName;
+    private String accountNumber;
+    private String bankName;
 
     public BankTransfer(PaymentMethod paymentMethod) {
+        super(paymentMethod);
     }
 
     public BankTransfer() {}
