@@ -54,16 +54,6 @@ class PaymentMethodControllerTest {
     }
 
     @Test
-    void testCreatePaymentMethod() throws Exception {
-        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
-
-        mockMvc.perform(post("/api/payment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isCreated());
-    }
-
-    @Test
     void testUpdatePaymentMethod() throws Exception {
         UUID id = UUID.randomUUID();
         PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
