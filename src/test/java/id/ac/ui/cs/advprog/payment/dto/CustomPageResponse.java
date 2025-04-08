@@ -15,5 +15,11 @@ public class CustomPageResponse<T> {
     private Map<String, Object> pagination;
 
     public CustomPageResponse(Page<T> page) {
+        this.paymentMethods = page.getContent();
+        this.pagination = new HashMap<>();
+        this.pagination.put("totalItems", page.getTotalElements());
+        this.pagination.put("totalPages", page.getTotalPages());
+        this.pagination.put("currentPage", page.getNumber());
+        this.pagination.put("limit", page.getSize());
     }
 }
