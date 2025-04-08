@@ -11,4 +11,17 @@ import java.util.UUID;
 @Generated
 @Data
 public class PaymentMethodDTO {
+    private UUID id;
+    private String name;
+    private String description;
+    private BigDecimal processingFee;
+    @JsonProperty("created_by")
+    private UUID createdBy;
+    @JsonProperty("created_at")
+    private Timestamp createdAt;
+    @JsonProperty("updated_at")
+    private Timestamp updatedAt;
+    @JsonProperty("deleted_at")
+    private Timestamp deletedAt;
+    private String paymentMethod;
 }
