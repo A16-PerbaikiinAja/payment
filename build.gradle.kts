@@ -51,7 +51,7 @@ tasks.test {
     filter {
         excludeTestsMatching("*FunctionalTest")
     }
-    finalizedBy(tasks.jacocoTestReport) // Generate JaCoCo report after running tests
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.register<Test>("unitTest") {
