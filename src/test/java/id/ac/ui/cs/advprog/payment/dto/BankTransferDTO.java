@@ -6,4 +6,7 @@ import lombok.Generated;
 @Generated
 @Data
 public class BankTransferDTO extends PaymentMethodDTO {
+    private String accountName;
+    private String accountNumber;
+    private String bankName;
 }
