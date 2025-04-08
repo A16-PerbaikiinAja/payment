@@ -12,25 +12,50 @@ class BankTransferTest {
 
     @BeforeEach
     void setUp() {
+        // Mock PaymentMethod untuk menguji konstruktor
+        paymentMethod = mock(PaymentMethod.class);
+        bankTransfer = new BankTransfer(paymentMethod);
     }
 
     @Test
     void testConstructorWithPaymentMethod() {
+        assertNotNull(bankTransfer);
+        assertEquals(paymentMethod, bankTransfer.getPaymentMethod());
     }
 
     @Test
     void testDefaultConstructor() {
+        bankTransfer = new BankTransfer();
+        assertNotNull(bankTransfer);
+        assertNull(bankTransfer.getAccountName());
+        assertNull(bankTransfer.getAccountNumber());
+        assertNull(bankTransfer.getBankName());
     }
 
     @Test
     void testGettersAndSetters() {
+        bankTransfer.setAccountName("John Doe");
+        bankTransfer.setAccountNumber("123456789");
+        bankTransfer.setBankName("Bank ABC");
+
+        assertEquals("John Doe", bankTransfer.getAccountName());
+        assertEquals("123456789", bankTransfer.getAccountNumber());
+        assertEquals("Bank ABC", bankTransfer.getBankName());
     }
 
     @Test
     void testInheritanceFromPaymentMethod() {
+        assertTrue(bankTransfer instanceof PaymentMethod);
     }
 
     @Test
     void testSetterAndGetterMethods() {
+        bankTransfer.setAccountName("Alice");
+        bankTransfer.setAccountNumber("987654321");
+        bankTransfer.setBankName("Bank XYZ");
+
+        assertEquals("Alice", bankTransfer.getAccountName());
+        assertEquals("987654321", bankTransfer.getAccountNumber());
+        assertEquals("Bank XYZ", bankTransfer.getBankName());
     }
 }
