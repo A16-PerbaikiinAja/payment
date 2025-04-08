@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.payment.model.controller;
+package id.ac.ui.cs.advprog.payment.controller;
 
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import org.springframework.http.ResponseEntity;

@@ -3,7 +3,6 @@ package id.ac.ui.cs.advprog.payment.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.model.PaymentMethod;
-import id.ac.ui.cs.advprog.payment.model.controller.PaymentMethodController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
