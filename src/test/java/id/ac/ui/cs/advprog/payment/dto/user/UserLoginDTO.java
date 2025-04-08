@@ -6,4 +6,6 @@ import lombok.Generated;
 @Generated
 @Data
 public class UserLoginDTO {
+    private String email;
+    private String password;
 }
