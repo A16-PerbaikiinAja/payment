@@ -12,8 +12,12 @@ import lombok.Generated;
 @Generated
 @Data
 public class EWallet extends PaymentMethod {
+    private String accountName;
+    private String virtualAccountNumber;
+    private String instructions;
 
     public EWallet(PaymentMethod paymentMethod) {
+        super(paymentMethod);
     }
 
     public EWallet() {}
