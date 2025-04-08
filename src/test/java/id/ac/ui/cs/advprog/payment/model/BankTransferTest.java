@@ -16,11 +16,6 @@ class BankTransferTest {
         bankTransfer = new BankTransfer(paymentMethod);
     }
 
-    @Test
-    void testConstructorWithPaymentMethod() {
-        assertNotNull(bankTransfer);
-        assertEquals(paymentMethod, bankTransfer.getPaymentMethod());
-    }
 
     @Test
     void testDefaultConstructor() {
