@@ -12,4 +12,5 @@ import java.util.UUID;
 
 @Repository
 public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UUID>, JpaSpecificationExecutor<PaymentMethod> {
+    Page<PaymentMethod> findAll(Specification<PaymentMethod> spec, Pageable pageable);
 }
