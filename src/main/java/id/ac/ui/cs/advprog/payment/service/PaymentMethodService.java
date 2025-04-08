@@ -8,4 +8,9 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface PaymentMethodService {
+    PaymentMethodDTO createPaymentMethod(PaymentMethodRegisterDTO paymentMethodToRegister);
+    PaymentMethodDTO updatePaymentMethod(UUID id, PaymentMethodRegisterDTO dto);
+    Page<PaymentMethodDTO> findAllPaymentMethod(int page, int size, Boolean isActive, String paymentMethod, String sortBy, String sortDirection);
+    PaymentMethodDTO findPaymentMethodById(String id);
+    Map<String, Object> deletePaymentMethod(String id);
 }

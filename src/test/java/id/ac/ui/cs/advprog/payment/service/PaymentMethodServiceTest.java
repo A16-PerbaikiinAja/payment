@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.payment.service;
 
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
+import id.ac.ui.cs.advprog.payment.model.PaymentMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
