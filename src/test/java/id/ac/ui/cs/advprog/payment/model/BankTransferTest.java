@@ -12,7 +12,6 @@ class BankTransferTest {
 
     @BeforeEach
     void setUp() {
-        // Mock PaymentMethod untuk menguji konstruktor
         paymentMethod = mock(PaymentMethod.class);
         bankTransfer = new BankTransfer(paymentMethod);
     }
