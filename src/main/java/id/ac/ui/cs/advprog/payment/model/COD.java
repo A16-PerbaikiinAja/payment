@@ -12,8 +12,11 @@ import lombok.Generated;
 @Generated
 @Data
 public class COD extends PaymentMethod {
+    private String phoneNumber;
+    private String instructions;
 
     public COD(PaymentMethod paymentMethod) {
+        super(paymentMethod);
     }
 
     public COD() {}
