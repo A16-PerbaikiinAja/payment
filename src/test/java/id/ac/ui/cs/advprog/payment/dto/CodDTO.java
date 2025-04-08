@@ -6,4 +6,6 @@ import lombok.Generated;
 @Generated
 @Data
 public class CodDTO extends PaymentMethodDTO {
+    private String phoneNumber;
+    private String instructions;
 }
