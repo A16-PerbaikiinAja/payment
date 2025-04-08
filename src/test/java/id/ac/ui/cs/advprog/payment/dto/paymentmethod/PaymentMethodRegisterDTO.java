@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.payment.dto;
+package id.ac.ui.cs.advprog.payment.dto.paymentmethod;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.payment.dto;
+package id.ac.ui.cs.advprog.payment.dto.paymentmethod;
 
 import lombok.Data;
 import lombok.Generated;
