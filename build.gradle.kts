@@ -45,6 +45,7 @@ dependencies {
 
     implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
     implementation("org.hibernate:hibernate-core:5.6.5.Final")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 }
 
 tasks.test {
