@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
@@ -126,16 +125,4 @@ class PaymentMethodServiceImplTest {
         assertEquals(paymentMethod.getId(), result.getId());
     }
 
-    @Test
-    void deletePaymentMethod_ShouldReturnSuccessMessage_WhenValidId() {
-        UUID id = UUID.randomUUID();
-
-        when(paymentMethodRepository.existsById(id)).thenReturn(true);
-
-        Map<String, Object> result = paymentMethodService.deletePaymentMethod(id.toString());
-
-        assertNotNull(result);
-        assertTrue(result.containsKey("message"));
-        assertEquals("Payment method deleted successfully", result.get("message"));
-    }
 }

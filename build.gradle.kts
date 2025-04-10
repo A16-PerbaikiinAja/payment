@@ -49,6 +49,17 @@ dependencies {
     implementation ("org.projectlombok:lombok")
     compileOnly ("org.projectlombok:lombok")
     annotationProcessor ("org.projectlombok:lombok")
+
+    // DARI REPO AUTHENTICATION
+    implementation("io.github.cdimascio:java-dotenv:5.2.2")
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    testImplementation("org.springframework.security:spring-security-test:6.0.2")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+
+
 }
 
 tasks.test {
