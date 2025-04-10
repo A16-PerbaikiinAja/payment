@@ -1,15 +1,12 @@
 package id.ac.ui.cs.advprog.payment.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
-import id.ac.ui.cs.advprog.payment.model.PaymentMethod;
+import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -18,7 +15,6 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(SpringExtension.class)
 class PaymentMethodControllerTest {
 
     private MockMvc mockMvc;
@@ -27,65 +23,92 @@ class PaymentMethodControllerTest {
     private PaymentMethodController paymentMethodController;
 
     @Mock
-    private PaymentMethod paymentMethod;
-
-    private ObjectMapper objectMapper;
+    private PaymentMethodService paymentMethodService;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
         mockMvc = MockMvcBuilders.standaloneSetup(paymentMethodController).build();
     }
 
     @Test
-    void testFindAllPaymentMethods() throws Exception {
-        mockMvc.perform(get("/api/payment")
+    void createPaymentMethod_ShouldReturnStatusOk_WhenValidInput() throws Exception {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setName("Test Payment Method");
+        dto.setDescription("Test Description");
+
+        mockMvc.perform(post("/payment-methods/admin/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Test Payment Method\", \"description\":\"Test Description\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void findAllPaymentMethods_ShouldReturnStatusOk_WhenAdminAccess() throws Exception {
+        mockMvc.perform(get("/payment-methods/admin")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testFindAllActivePaymentMethods() throws Exception {
-        mockMvc.perform(get("/api/payment/active")
-                        .param("page", "0")
-                        .param("size", "10"))
+    void getPaymentMethodById_ShouldReturnStatusOk_WhenValidId() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(get("/payment-methods/admin/" + id))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testUpdatePaymentMethod() throws Exception {
+    void updatePaymentMethod_ShouldReturnStatusOk_WhenValidInput() throws Exception {
         UUID id = UUID.randomUUID();
         PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setName("Updated Payment Method");
+        dto.setDescription("Updated Description");
 
-        mockMvc.perform(put("/api/payment/{id}", id)
+        mockMvc.perform(put("/payment-methods/admin/" + id + "/edit")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+                        .content("{\"name\":\"Updated Payment Method\", \"description\":\"Updated Description\"}"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testGetPaymentMethodById() throws Exception {
+    void deletePaymentMethod_ShouldReturnStatusOk_WhenValidId() throws Exception {
         UUID id = UUID.randomUUID();
 
-        mockMvc.perform(get("/api/payment/{id}", id))
+        mockMvc.perform(delete("/payment-methods/admin/" + id + "/delete"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testGetByType() throws Exception {
-        mockMvc.perform(get("/api/payment/type")
-                        .param("type", "credit")
+    void findAllActivePaymentMethods_ShouldReturnStatusOk_WhenValidRequest() throws Exception {
+        mockMvc.perform(get("/payment-methods/active")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testDeletePaymentMethod() throws Exception {
+    void getActivePaymentMethodById_ShouldReturnStatusOk_WhenValidId() throws Exception {
         UUID id = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/payment/{id}", id))
+        mockMvc.perform(get("/payment-methods/active/" + id))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void getByType_ShouldReturnStatusOk_WhenValidType() throws Exception {
+        mockMvc.perform(get("/payment-methods/type")
+                        .param("type", "COD")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testTesting_ShouldReturnStatusOk_WhenTestEndpointCalled() throws Exception {
+        mockMvc.perform(get("/payment-methods/test"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").value("This is a test response!"));
     }
 }
