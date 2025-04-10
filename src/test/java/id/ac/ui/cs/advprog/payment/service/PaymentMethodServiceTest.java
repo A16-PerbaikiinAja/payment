@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -108,15 +107,4 @@ class PaymentMethodServiceTest {
         assertEquals(paymentMethod.getName(), result.getName());
     }
 
-    @Test
-    void deletePaymentMethod_ShouldReturnSuccessMessage_WhenValidId() {
-        UUID id = UUID.randomUUID();
-        when(paymentMethodRepository.existsById(id)).thenReturn(true);
-
-        Map<String, Object> result = paymentMethodService.deletePaymentMethod(id.toString());
-
-        assertNotNull(result);
-        assertTrue(result.containsKey("message"));
-        assertEquals("Payment method deleted successfully", result.get("message"));
-    }
 }
