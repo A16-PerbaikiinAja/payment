@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    needs: [pmd, scorecard]  # Ensure this job runs only after PMD and Scorecard jobs are successful
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
