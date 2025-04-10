@@ -39,8 +39,6 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
         paymentMethod.setProcessingFee(dto.getProcessingFee());
         paymentMethod.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         paymentMethod.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
-
-        // Mengonversi String createdBy menjadi UUID
         paymentMethod.setCreatedBy(UUID.fromString(dto.getCreatedBy()));
 
         switch (PaymentMethodType.fromString(dto.getPaymentMethod())) {
