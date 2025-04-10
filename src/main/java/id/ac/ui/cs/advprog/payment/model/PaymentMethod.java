@@ -42,4 +42,12 @@ public class PaymentMethod {
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
+    public PaymentMethod(String name, String description, BigDecimal processingFee, Timestamp createdAt, Timestamp updatedAt, UUID createdBy) {
+        this.name = name;
+        this.description = description;
+        this.processingFee = processingFee;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
+    }
 }

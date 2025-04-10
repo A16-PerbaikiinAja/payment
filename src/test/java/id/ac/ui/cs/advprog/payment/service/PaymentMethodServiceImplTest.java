@@ -7,12 +7,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.data.domain.*;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
@@ -93,10 +93,11 @@ class PaymentMethodServiceImplTest {
 
     @Test
     void findAllPaymentMethod_ShouldReturnPagedResult_WhenValidRequest() {
-        List<PaymentMethod> paymentMethods = List.of(new PaymentMethod(UUID.randomUUID(), "Test Payment", "Test Description", BigDecimal.valueOf(2.5), Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now()), UUID.randomUUID()));
+        List<PaymentMethod> paymentMethods = List.of(
+                new PaymentMethod("Test Payment", "Test Description", BigDecimal.valueOf(2.5), Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now()), UUID.randomUUID())
+        );
 
-        Page<PaymentMethod> paymentMethodPage = new PageImpl<>(paymentMethods);
-        when(paymentMethodRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(paymentMethodPage);
+        when(paymentMethodRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(paymentMethods));
 
         Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(0, 10, true, "COD", "name", "ASC");
 
@@ -108,7 +109,14 @@ class PaymentMethodServiceImplTest {
     void findPaymentMethodById_ShouldReturnPaymentMethodDTO_WhenPaymentMethodExists() {
         UUID id = UUID.randomUUID();
 
-        PaymentMethod paymentMethod = new PaymentMethod(id, "Test Payment", "Test Description", BigDecimal.valueOf(2.5), Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now()), UUID.randomUUID());
+        PaymentMethod paymentMethod = new PaymentMethod();
+        paymentMethod.setId(id);
+        paymentMethod.setName(paymentMethodRegisterDTO.getName());
+        paymentMethod.setDescription(paymentMethodRegisterDTO.getDescription());
+        paymentMethod.setProcessingFee(paymentMethodRegisterDTO.getProcessingFee());
+        paymentMethod.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        paymentMethod.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        paymentMethod.setCreatedBy(UUID.fromString(paymentMethodRegisterDTO.getCreatedBy()));
 
         when(paymentMethodRepository.findById(any(UUID.class))).thenReturn(java.util.Optional.of(paymentMethod));
 
