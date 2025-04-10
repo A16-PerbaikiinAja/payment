@@ -1,6 +1,9 @@
 package id.ac.ui.cs.advprog.payment.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -21,8 +24,4 @@ public class BankTransfer extends PaymentMethod {
 
     @Column(name = "bank_name", nullable = false, length = 100)
     private String bankName;
-
-    public BankTransfer(PaymentMethod paymentMethod) {
-        super();
-    }
 }
