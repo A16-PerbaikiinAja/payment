@@ -1,6 +1,13 @@
 package id.ac.ui.cs.advprog.payment.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import jakarta. persistence. Id;
+import jakarta. persistence. GeneratedValue;
+import jakarta. persistence. GenerationType;
+import jakarta. persistence. Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
