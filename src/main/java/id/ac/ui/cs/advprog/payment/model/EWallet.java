@@ -24,4 +24,8 @@ public class EWallet extends PaymentMethod {
 
     @Column(name = "instructions", columnDefinition = "TEXT")
     private String instructions;
+
+    public EWallet(PaymentMethod paymentMethod) {
+        super();
+    }
 }

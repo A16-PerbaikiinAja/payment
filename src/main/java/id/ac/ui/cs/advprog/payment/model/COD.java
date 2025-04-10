@@ -21,4 +21,8 @@ public class COD extends PaymentMethod {
 
     @Column(name = "instructions", columnDefinition = "TEXT")
     private String instructions;
+
+    public COD(PaymentMethod paymentMethod) {
+        super();
+    }
 }

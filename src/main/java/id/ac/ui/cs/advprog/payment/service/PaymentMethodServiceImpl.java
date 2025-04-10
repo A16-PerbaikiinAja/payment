@@ -1,6 +1,10 @@
 package id.ac.ui.cs.advprog.payment.service;
 
-import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.EWalletDTO;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.BankTransferDTO;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.CodDTO;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.enums.PaymentMethodType;
 import id.ac.ui.cs.advprog.payment.model.BankTransfer;
 import id.ac.ui.cs.advprog.payment.model.COD;
@@ -17,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,7 +51,6 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 COD cod = new COD(paymentMethod);
                 cod.setPhoneNumber(dto.getPhoneNumber());
                 cod.setInstructions(dto.getInstructions());
-
                 return convertToDTO(paymentMethodRepository.save(cod));
             }
             case BANK_TRANSFER -> {
@@ -54,7 +58,6 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 bt.setAccountName(dto.getAccountName());
                 bt.setAccountNumber(dto.getAccountNumber());
                 bt.setBankName(dto.getBankName());
-
                 return convertToDTO(paymentMethodRepository.save(bt));
             }
             case E_WALLET -> {
@@ -62,7 +65,6 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 ew.setAccountName(dto.getAccountName());
                 ew.setVirtualAccountNumber(dto.getVirtualAccountNumber());
                 ew.setInstructions(dto.getInstructions());
-
                 return convertToDTO(paymentMethodRepository.save(ew));
             }
             default -> throw new IllegalArgumentException("Unknown payment method type: " + dto.getPaymentMethod());
@@ -76,9 +78,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
     @Override
     public Page<PaymentMethodDTO> findAllPaymentMethod(int page, int size, Boolean isActive, String paymentMethod, String sortBy, String sortDirection) {
-        Sort.Direction direction = (sortDirection != null && sortDirection.equalsIgnoreCase("DESC"))
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
+        Sort.Direction direction = (sortDirection != null && "DESC".equalsIgnoreCase(sortDirection)) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sort = Sort.by(direction, sortBy != null && !sortBy.isEmpty() ? sortBy : "id");
         Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -121,7 +121,6 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
         }
 
         Page<PaymentMethod> paymentMethods = paymentMethodRepository.findAll(spec, pageable);
-
         return paymentMethods == null ? Page.empty() : paymentMethods.map(this::convertToDTO);
     }
 
@@ -140,7 +139,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     }
 
     private PaymentMethodDTO convertToDTO(PaymentMethod method) {
-        PaymentMethodDTO dto = null;
+        PaymentMethodDTO dto;
 
         if (method instanceof COD) {
             CodDTO cod = new CodDTO();

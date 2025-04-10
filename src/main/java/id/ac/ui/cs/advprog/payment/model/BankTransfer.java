@@ -24,4 +24,8 @@ public class BankTransfer extends PaymentMethod {
 
     @Column(name = "bank_name", nullable = false, length = 100)
     private String bankName;
+
+    public BankTransfer(PaymentMethod paymentMethod) {
+        super();
+    }
 }
