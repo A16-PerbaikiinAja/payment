@@ -1,65 +1,181 @@
 package id.ac.ui.cs.advprog.payment.model;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.UUID;
 
 class CODTest {
 
-    private COD cod;
-    private COD codCopy;
-    private PaymentMethod paymentMethod;
+    @Test
+    void testCODConstructor() {
+        UUID id = UUID.randomUUID();
+        String name = "COD (Cash On Delivery)";
+        String description = "Payment on delivery";
+        BigDecimal processingFee = BigDecimal.valueOf(1.0);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = null;
+        UUID createdBy = UUID.randomUUID();
+        String phoneNumber = "081234567890";
+        String instructions = "Payment will be made in cash on delivery.";
 
-    @BeforeEach
-    void setUp() {
-        paymentMethod = mock(PaymentMethod.class);
+        COD cod = new COD();
+        cod.setId(id);
+        cod.setName(name);
+        cod.setDescription(description);
+        cod.setProcessingFee(processingFee);
+        cod.setCreatedAt(createdAt);
+        cod.setUpdatedAt(updatedAt);
+        cod.setCreatedBy(createdBy);
+        cod.setPhoneNumber(phoneNumber);
+        cod.setInstructions(instructions);
 
-        cod = new COD(paymentMethod);
-        cod.setPhoneNumber("123456789");
-        cod.setInstructions("Leave at the door.");
+        assertEquals(id, cod.getId());
+        assertEquals(name, cod.getName());
+        assertEquals(description, cod.getDescription());
+        assertEquals(processingFee, cod.getProcessingFee());
+        assertEquals(deletedAt, cod.getDeletedAt());
+        assertEquals(createdAt, cod.getCreatedAt());
+        assertEquals(updatedAt, cod.getUpdatedAt());
+        assertEquals(createdBy, cod.getCreatedBy());
+        assertEquals(phoneNumber, cod.getPhoneNumber());
+        assertEquals(instructions, cod.getInstructions());
     }
 
     @Test
-    void testConstructorWithPaymentMethod() {
-        assertNotNull(cod);
-        assertEquals("123456789", cod.getPhoneNumber());
-        assertEquals("Leave at the door.", cod.getInstructions());
+    void testCODNoArgsConstructor() {
+        COD cod = new COD();
+
+        assertNull(cod.getId());
+        assertNull(cod.getName());
+        assertNull(cod.getDescription());
+        assertNull(cod.getProcessingFee());
+        assertNull(cod.getDeletedAt());
+        assertNull(cod.getCreatedAt());
+        assertNull(cod.getUpdatedAt());
+        assertNull(cod.getCreatedBy());
+        assertNull(cod.getPhoneNumber());
+        assertNull(cod.getInstructions());
     }
 
     @Test
-    void testDefaultConstructor() {
-        codCopy = new COD();
-        assertNotNull(codCopy);
-        assertNull(codCopy.getPhoneNumber());
-        assertNull(codCopy.getInstructions());
+    void testSetterAndGetter() {
+        COD cod = new COD();
+
+        UUID id = UUID.randomUUID();
+        String name = "COD (Cash On Delivery)";
+        String description = "Payment on delivery";
+        BigDecimal processingFee = BigDecimal.valueOf(1.0);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = new Timestamp(System.currentTimeMillis());
+        UUID createdBy = UUID.randomUUID();
+        String phoneNumber = "081234567890";
+        String instructions = "Payment will be made in cash on delivery.";
+
+        cod.setId(id);
+        cod.setName(name);
+        cod.setDescription(description);
+        cod.setProcessingFee(processingFee);
+        cod.setCreatedAt(createdAt);
+        cod.setUpdatedAt(updatedAt);
+        cod.setDeletedAt(deletedAt);
+        cod.setCreatedBy(createdBy);
+        cod.setPhoneNumber(phoneNumber);
+        cod.setInstructions(instructions);
+
+        assertEquals(id, cod.getId());
+        assertEquals(name, cod.getName());
+        assertEquals(description, cod.getDescription());
+        assertEquals(processingFee, cod.getProcessingFee());
+        assertEquals(createdAt, cod.getCreatedAt());
+        assertEquals(updatedAt, cod.getUpdatedAt());
+        assertEquals(deletedAt, cod.getDeletedAt());
+        assertEquals(createdBy, cod.getCreatedBy());
+        assertEquals(phoneNumber, cod.getPhoneNumber());
+        assertEquals(instructions, cod.getInstructions());
     }
 
     @Test
-    void testGettersAndSetters() {
-        cod.setPhoneNumber("987654321");
-        cod.setInstructions("Leave at the front desk.");
+    void testCODEquality() {
+        UUID id = UUID.randomUUID();
+        String name = "COD (Cash On Delivery)";
+        String description = "Payment on delivery";
+        BigDecimal processingFee = BigDecimal.valueOf(1.0);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = null;
+        UUID createdBy = UUID.randomUUID();
+        String phoneNumber = "081234567890";
+        String instructions = "Payment will be made in cash on delivery.";
 
-        assertEquals("987654321", cod.getPhoneNumber());
-        assertEquals("Leave at the front desk.", cod.getInstructions());
+        COD cod1 = new COD();
+        cod1.setId(id);
+        cod1.setName(name);
+        cod1.setDescription(description);
+        cod1.setProcessingFee(processingFee);
+        cod1.setCreatedAt(createdAt);
+        cod1.setUpdatedAt(updatedAt);
+        cod1.setDeletedAt(deletedAt);
+        cod1.setCreatedBy(createdBy);
+        cod1.setPhoneNumber(phoneNumber);
+        cod1.setInstructions(instructions);
+
+        COD cod2 = new COD();
+        cod2.setId(id);
+        cod2.setName(name);
+        cod2.setDescription(description);
+        cod2.setProcessingFee(processingFee);
+        cod2.setCreatedAt(createdAt);
+        cod2.setUpdatedAt(updatedAt);
+        cod2.setDeletedAt(deletedAt);
+        cod2.setCreatedBy(createdBy);
+        cod2.setPhoneNumber(phoneNumber);
+        cod2.setInstructions(instructions);
+
+        assertEquals(cod1, cod2);
     }
 
     @Test
-    void testInheritanceFromPaymentMethod() {
-        assertTrue(cod instanceof PaymentMethod);
-    }
+    void testCODHashCode() {
+        UUID id = UUID.randomUUID();
+        String name = "COD (Cash On Delivery)";
+        String description = "Payment on delivery";
+        BigDecimal processingFee = BigDecimal.valueOf(1.0);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = null;
+        UUID createdBy = UUID.randomUUID();
+        String phoneNumber = "081234567890";
+        String instructions = "Payment will be made in cash on delivery.";
 
-    @Test
-    void testFieldValidation() {
-        COD invalidCod = new COD();
+        COD cod1 = new COD();
+        cod1.setId(id);
+        cod1.setName(name);
+        cod1.setDescription(description);
+        cod1.setProcessingFee(processingFee);
+        cod1.setCreatedAt(createdAt);
+        cod1.setUpdatedAt(updatedAt);
+        cod1.setDeletedAt(deletedAt);
+        cod1.setCreatedBy(createdBy);
+        cod1.setPhoneNumber(phoneNumber);
+        cod1.setInstructions(instructions);
 
-        assertNull(invalidCod.getPhoneNumber());
-        assertNull(invalidCod.getInstructions());
+        COD cod2 = new COD();
+        cod2.setId(id);
+        cod2.setName(name);
+        cod2.setDescription(description);
+        cod2.setProcessingFee(processingFee);
+        cod2.setCreatedAt(createdAt);
+        cod2.setUpdatedAt(updatedAt);
+        cod2.setDeletedAt(deletedAt);
+        cod2.setCreatedBy(createdBy);
+        cod2.setPhoneNumber(phoneNumber);
+        cod2.setInstructions(instructions);
 
-        invalidCod.setPhoneNumber("111222333");
-        invalidCod.setInstructions("Please call before arrival");
-
-        assertNotNull(invalidCod.getPhoneNumber());
-        assertNotNull(invalidCod.getInstructions());
+        assertEquals(cod1.hashCode(), cod2.hashCode());
     }
 }

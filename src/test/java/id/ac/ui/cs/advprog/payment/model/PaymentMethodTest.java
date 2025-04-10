@@ -1,9 +1,7 @@
 package id.ac.ui.cs.advprog.payment.model;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -11,78 +9,106 @@ import java.util.UUID;
 
 class PaymentMethodTest {
 
-    private PaymentMethod paymentMethod;
-    private PaymentMethod paymentMethodCopy;
+    @Test
+    void testPaymentMethodConstructor() {
+        UUID id = UUID.randomUUID();
+        String name = "Credit Card";
+        String description = "Payment using credit card";
+        BigDecimal processingFee = BigDecimal.valueOf(1.5);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = null;
+        UUID createdBy = UUID.randomUUID();
 
-    @BeforeEach
-    void setUp() {
-        User mockUser = mock(User.class);
+        PaymentMethod paymentMethod = new PaymentMethod(id, name, description, processingFee, deletedAt, createdAt, updatedAt, createdBy);
 
-        paymentMethod = new PaymentMethod();
-        paymentMethod.setId(UUID.randomUUID());
-        paymentMethod.setName("Credit Card");
-        paymentMethod.setDescription("Payment via credit card");
-        paymentMethod.setProcessingFee(new BigDecimal("2.5"));
-        paymentMethod.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        paymentMethod.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-        paymentMethod.setCreatedBy(mockUser);
+        assertEquals(id, paymentMethod.getId());
+        assertEquals(name, paymentMethod.getName());
+        assertEquals(description, paymentMethod.getDescription());
+        assertEquals(processingFee, paymentMethod.getProcessingFee());
+        assertEquals(deletedAt, paymentMethod.getDeletedAt());
+        assertEquals(createdAt, paymentMethod.getCreatedAt());
+        assertEquals(updatedAt, paymentMethod.getUpdatedAt());
+        assertEquals(createdBy, paymentMethod.getCreatedBy());
     }
 
     @Test
-    void testConstructorWithAnotherPaymentMethod() {
-        paymentMethodCopy = new PaymentMethod(paymentMethod);
+    void testPaymentMethodNoArgsConstructor() {
+        PaymentMethod paymentMethod = new PaymentMethod();
 
-        assertEquals(paymentMethod.getName(), paymentMethodCopy.getName());
-        assertEquals(paymentMethod.getDescription(), paymentMethodCopy.getDescription());
-        assertEquals(paymentMethod.getProcessingFee(), paymentMethodCopy.getProcessingFee());
-        assertEquals(paymentMethod.getCreatedAt(), paymentMethodCopy.getCreatedAt());
-        assertEquals(paymentMethod.getUpdatedAt(), paymentMethodCopy.getUpdatedAt());
-        assertEquals(paymentMethod.getCreatedBy(), paymentMethodCopy.getCreatedBy());
+        assertNull(paymentMethod.getId());
+        assertNull(paymentMethod.getName());
+        assertNull(paymentMethod.getDescription());
+        assertNull(paymentMethod.getProcessingFee());
+        assertNull(paymentMethod.getDeletedAt());
+        assertNull(paymentMethod.getCreatedAt());
+        assertNull(paymentMethod.getUpdatedAt());
+        assertNull(paymentMethod.getCreatedBy());
     }
 
     @Test
-    void testDefaultConstructor() {
-        paymentMethodCopy = new PaymentMethod();
-        assertNotNull(paymentMethodCopy);
-        assertNull(paymentMethodCopy.getName());
-        assertNull(paymentMethodCopy.getDescription());
-        assertNull(paymentMethodCopy.getProcessingFee());
-        assertNull(paymentMethodCopy.getCreatedAt());
-        assertNull(paymentMethodCopy.getUpdatedAt());
-        assertNull(paymentMethodCopy.getCreatedBy());
+    void testSetterAndGetter() {
+        PaymentMethod paymentMethod = new PaymentMethod();
+
+        UUID id = UUID.randomUUID();
+        String name = "Debit Card";
+        String description = "Payment using debit card";
+        BigDecimal processingFee = BigDecimal.valueOf(0.5);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = new Timestamp(System.currentTimeMillis());
+        UUID createdBy = UUID.randomUUID();
+
+        paymentMethod.setId(id);
+        paymentMethod.setName(name);
+        paymentMethod.setDescription(description);
+        paymentMethod.setProcessingFee(processingFee);
+        paymentMethod.setCreatedAt(createdAt);
+        paymentMethod.setUpdatedAt(updatedAt);
+        paymentMethod.setDeletedAt(deletedAt);
+        paymentMethod.setCreatedBy(createdBy);
+
+        assertEquals(id, paymentMethod.getId());
+        assertEquals(name, paymentMethod.getName());
+        assertEquals(description, paymentMethod.getDescription());
+        assertEquals(processingFee, paymentMethod.getProcessingFee());
+        assertEquals(createdAt, paymentMethod.getCreatedAt());
+        assertEquals(updatedAt, paymentMethod.getUpdatedAt());
+        assertEquals(deletedAt, paymentMethod.getDeletedAt());
+        assertEquals(createdBy, paymentMethod.getCreatedBy());
     }
 
     @Test
-    void testGettersAndSetters() {
-        paymentMethod.setName("Debit Card");
-        paymentMethod.setDescription("Payment via debit card");
-        paymentMethod.setProcessingFee(new BigDecimal("1.5"));
-        paymentMethod.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        paymentMethod.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-        paymentMethod.setCreatedBy(new User());
-        assertEquals("Debit Card", paymentMethod.getName());
-        assertEquals("Payment via debit card", paymentMethod.getDescription());
-        assertEquals(new BigDecimal("1.5"), paymentMethod.getProcessingFee());
-        assertNotNull(paymentMethod.getCreatedAt());
-        assertNotNull(paymentMethod.getUpdatedAt());
-        assertNotNull(paymentMethod.getCreatedBy());
+    void testPaymentMethodEquality() {
+        UUID id = UUID.randomUUID();
+        String name = "Credit Card";
+        String description = "Payment using credit card";
+        BigDecimal processingFee = BigDecimal.valueOf(1.5);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = null;
+        UUID createdBy = UUID.randomUUID();
+
+        PaymentMethod paymentMethod1 = new PaymentMethod(id, name, description, processingFee, deletedAt, createdAt, updatedAt, createdBy);
+        PaymentMethod paymentMethod2 = new PaymentMethod(id, name, description, processingFee, deletedAt, createdAt, updatedAt, createdBy);
+
+        assertEquals(paymentMethod1, paymentMethod2);
     }
 
     @Test
-    void testIdGeneration() {
-        assertNotNull(paymentMethod.getId());
-    }
+    void testPaymentMethodHashCode() {
+        UUID id = UUID.randomUUID();
+        String name = "Credit Card";
+        String description = "Payment using credit card";
+        BigDecimal processingFee = BigDecimal.valueOf(1.5);
+        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+        Timestamp updatedAt = new Timestamp(System.currentTimeMillis());
+        Timestamp deletedAt = null;
+        UUID createdBy = UUID.randomUUID();
 
-    @Test
-    void testFieldValidation() {
-        PaymentMethod invalidPaymentMethod = new PaymentMethod();
-        assertNull(invalidPaymentMethod.getName());
-        assertNull(invalidPaymentMethod.getDescription());
+        PaymentMethod paymentMethod1 = new PaymentMethod(id, name, description, processingFee, deletedAt, createdAt, updatedAt, createdBy);
+        PaymentMethod paymentMethod2 = new PaymentMethod(id, name, description, processingFee, deletedAt, createdAt, updatedAt, createdBy);
 
-        invalidPaymentMethod.setName("Bank Transfer");
-        invalidPaymentMethod.setDescription("Bank account transfer");
-
-        assertNotNull(invalidPaymentMethod.getName());
-        assertNotNull(invalidPaymentMethod.getDescription());
+        assertEquals(paymentMethod1.hashCode(), paymentMethod2.hashCode());
     }
 }

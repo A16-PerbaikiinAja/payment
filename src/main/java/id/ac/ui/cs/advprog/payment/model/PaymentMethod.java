@@ -1,8 +1,16 @@
 package id.ac.ui.cs.advprog.payment.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import jakarta. persistence. Id;
+import jakarta. persistence. GeneratedValue;
+import jakarta. persistence. GenerationType;
+import jakarta. persistence. Column;
 import lombok.Data;
-import lombok.Generated;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -11,7 +19,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "payment_methods")
 @Inheritance(strategy = InheritanceType.JOINED)
-@Generated
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class PaymentMethod {
     @Id
@@ -37,18 +46,15 @@ public class PaymentMethod {
     @Column(name = "updated_at", nullable = false)
     private Timestamp updatedAt;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
-    private User createdBy;
+    @Column(name = "created_by", nullable = false)
+    private UUID createdBy;
 
-    public PaymentMethod(PaymentMethod other) {
-        this.name = other.name;
-        this.description = other.description;
-        this.processingFee = other.processingFee;
-        this.createdAt = other.createdAt;
-        this.updatedAt = other.updatedAt;
-        this.createdBy = other.createdBy;
+    public PaymentMethod(String name, String description, BigDecimal processingFee, Timestamp createdAt, Timestamp updatedAt, UUID createdBy) {
+        this.name = name;
+        this.description = description;
+        this.processingFee = processingFee;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
     }
-
-    public PaymentMethod() {}
 }
