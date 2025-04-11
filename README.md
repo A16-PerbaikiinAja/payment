@@ -21,20 +21,23 @@
 
 **SOLID Principles ✅**
 - **Single Responsibility Principle (SRP)**: Kode yang dibuat sudah mengikuti prinsip ini, seperti controller yang hanya menangani request dan response, service yang menangani bussiness logic, dan model yang merepresentasikan data.
-- **Open/Closed Principle (OCP)**: Sudah mengimplementasikan interface seperti `PaymentMethodService` yang memungkinkan mudahnya penambahan metode pembayaran baru tanpa mengubah kode yang ada.
+- **Open/Closed Principle (OCP)**: Sudah mengimplementasikan interface seperti `PaymentMethodService` yang memudahkan penambahan metode pembayaran baru tanpa mengubah kode yang ada.
 - **Liskov Substitution Principle (LSP)**: Penggunaan inheritance dengan `PaymentMethod` sebagai superclass dan `COD`, `BankTransfer`, dan `EWallet` sebagai subclass sudah sesuai dengan prinsip ini.
-- **Interface Segregation Principle (ISP)**: Interface yang digunakan sudah tersegmentasi dengan baik, seperti `PaymentMethodService` yang hanya punya method yang relevan untuk class yang mengimplementasikannya.
+- **Interface Segregation Principle (ISP)**: Interface yang digunakan sudah tersegmentasi, seperti `PaymentMethodService` yang hanya punya method yang relevan untuk class yang mengimplementasikannya.
 - **Dependency Inversion Principle (DIP)**: Menggunakan dependency injection melalui anotasi `@Autowired` yang memisahkan antara komponen tinggi (controller/service) dengan komponen rendah (repository).
 
 **Maintainability 🧰**
-- **Separation of Concerns**: Controller hanya menangani request/response, service menangani logika bisnis, dan repository yang berhubungan dengan database. Ini mempermudah pengelolaan dan pengembangan kode.
+- **Separation of Concerns**: Controller hanya menangani request/response, service menangani logika bisnis, dan repository yang berhubungan dengan database. 
 - **Modularisasi**: Sudah cukup modular dengan penggunaan DTO untuk memisahkan data yang dikirim ke dan dari client, serta menggunakan Factory Pattern untuk pembuatan objek yang berbasis tipe pembayaran.
 - **Readability**: Sudah cukup readable, tapi mungkin kedepannya akan diberikan komentar atau dokumentasi supaya lebih clear.
-- **Testability**: Terdapat unit tests yang menguji controller dan service, memastikan bahwa perubahan atau penambahan fitur tidak merusak fungsionalitas yang ada.
+- **Testability**: Sudah terdapat unit tests yang menguji controller dan service, memastikan bahwa perubahan atau penambahan fitur tidak merusak fungsionalitas yang ada.
 
 **Design Patterns 🎨**
-- **Factory Pattern**: Diimplementasikan dalam pembuatan objek `PaymentMethod` berdasarkan jenis pembayaran, seperti `COD`, `BankTransfer`, dan `EWallet`.
-- **Strategy Pattern (TBA)**: Diterapkan pada jenis-jenis pembayaran, memungkinkan penambahan metode pembayaran baru dengan mudah tanpa merubah kode yang ada.
+- **DTO (Data Transfer Object)**: Diimplementasikan dalam pembuatan objek `PaymentMethod` berdasarkan jenis pembayaran, seperti `COD`, `BankTransfer`, dan `EWallet`.
+    > Alasannya, karena menurut saya, menggunakan DTO itu akan memudahkan dalam mengelola data yang dikirim antara app layer (seperti dari controller ke service atau sebaliknya). Dengan DTO, saya bisa memisahkan bussiness logic dari data representation yang digunakan oleh client (misalnya, frontend). Jadi kalau ada yang ingin mengambil API bisa langsung transfer object nya.
+
+- **Factory Pattern**: Diterapkan pada jenis-jenis pembayaran, memungkinkan penambahan metode pembayaran baru dengan mudah tanpa merubah kode yang ada.
+    > Saya memilih menggunakan Factory Pattern untuk menyederhanakan pembuatan objek-objek, terutama pada bagian PaymentMethod yang punya berbagai tipe. Factory Pattern memungkinkan aplikasi untuk menangani variasi tipe objek (misalnya BankTransfer, EWallet, dan COD) tanpa harus membuat objek secara langsung di banyak tempat.
 
 ---
 
@@ -47,13 +50,13 @@
 
 **Secure Coding 🔒**
 - **Input Validation**: Saat ini, input dari pengguna seperti di `PaymentMethodRegisterDTO` perlu divalidasi untuk memastikan data yang masuk tidak menyebabkan kerentanannya, misalnya menggunakan anotasi validasi seperti `@NotNull`, `@Size`, atau `@Email`.
-- **Access Control**: Sudah diterapkan dengan baik menggunakan anotasi `@PreAuthorize("hasRole('ADMIN')")` dan `@PermitAll`, membatasi akses berdasarkan peran pengguna.
-- **JWT Authentication**: Sudah digunakan untuk autentikasi dan kontrol akses. Note: Pastikan lagi kalau token selalu diverifikasi dengan benar untuk mencegah masalah terkait keamanan.
+- **Access Control**: Sudah diterapkan menggunakan anotasi `@PreAuthorize("hasRole('ADMIN')")` dan `@PermitAll`, membatasi akses berdasarkan peran pengguna.
+- **JWT Authentication**: Sudah digunakan untuk autentikasi dan kontrol akses. Saya akan memastikan lagi kalau token selalu diverifikasi dengan benar untuk mencegah masalah terkait keamanan.
 
 **Testing 🧪**
-- **Unit Testing**: Sudah dilakukan untuk memastikan bahwa controller dan service berfungsi sebagaimana mestinya. Namun, lebih banyak edge case dan skenario error yang perlu diuji.
+- **Unit Testing**: Sudah dilakukan untuk memastikan bahwa controller dan service berfungsi sebagaimana mestinya. Tapi masih bisa ditambah lebih banyak edge case dan skenario error yang perlu diuji.
 - **Mocking**: Sudah menggunakan mocking (`Mockito`) untuk memastikan bahwa unit tests tidak bergantung pada implementasi yang lebih besar, seperti database.
-- **Test Coverage**: Perlu penambahan untuk mencakup lebih banyak jalur yang mungkin (misalnya validasi input yang salah, kesalahan autentikasi) dan memastikan kode dapat diubah tanpa merusak fungsionalitas yang ada.
+- **Test Coverage**: Masih bisa ditambahkan lebih banyak jalur yang mungkin (misalnya validasi input yang salah, kesalahan autentikasi) dan memastikan kode bisa diubah tanpa merusak fungsionalitas yang ada.
 
 **Profiling (TBA)**:
 - Belum ada, saya akan menggunakan tools seperti **JProfiler** untuk memantau performa.
@@ -80,11 +83,11 @@
 
 **CI/CD (Continuous Integration/Continuous Deployment) 💻**
 - Sudah diterapkan menggunakan **GitHub Actions**. Setiap perubahan pada branch `main` memicu proses build, analisis kode statis, dan deploy ke EC2.
-- Deployment dilakukan **SETELAH** job testing dan quality check (seperti PMD analysis dan Scorecard security analysis) berhasil. Hal ini memastikan kalau hanya kode yang telah diuji dengan baik yang akan dideploy ke lingkungan produksi.
+- Deployment dilakukan **SETELAH** job testing dan quality check (seperti PMD analysis dan Scorecard security analysis) berhasil. Hal ini memastikan kalau hanya kode yang telah diuji dengan baik yang akan dideploy ke production environment.
 
 **Deployment Strategies 🔧**
 - **Automated Deployment**: Setiap kali ada perubahan pada `main`, aplikasi di-build dan dideploy otomatis ke EC2.
-- **Rollback Strategy (TBA)**: Belum ada rollback strategy saat deploy gagal. Bisa ditambahkan, misalnya dengan menggunakan tag pada Docker image yang bisa digunakan untuk rollback ke versi sebelumnya jika terjadi masalah.
+- **Rollback Strategy (TBA)**: Belum ada rollback strategy saat deploy gagal. Bisa ditambahkan, misalnya dengan menggunakan tag pada Docker image yang bisa digunakan untuk rollback ke versi sebelumnya kalau terjadi masalah.
 
 **Containerization 🐳**
 - Menggunakan **Docker** untuk membangun image dan meng-deploy aplikasi ke EC2. Docker memastikan aplikasi berjalan konsisten di berbagai environment (dev, staging, production).
