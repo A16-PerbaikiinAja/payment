@@ -25,10 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
 
 @Service
 public class PaymentMethodServiceImpl implements PaymentMethodService {
@@ -76,8 +74,54 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
     @Override
     public PaymentMethodDTO updatePaymentMethod(UUID id, PaymentMethodRegisterDTO dto) {
-        return null;
+        PaymentMethod existing = paymentMethodRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Payment method not found with id: " + id));
+
+        existing.setName(dto.getName());
+        existing.setDescription(dto.getDescription());
+        existing.setProcessingFee(dto.getProcessingFee());
+        existing.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        if (dto.getStatus().equals("ACTIVE")) {
+            existing.setDeletedAt(null);
+        } else if (dto.getStatus().equals("INACTIVE")) {
+            existing.setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
+        }
+
+        switch (PaymentMethodType.fromString(dto.getPaymentMethod())) {
+            case COD -> {
+                if (existing instanceof COD) {
+                    COD cod = (COD) existing;
+                    cod.setPhoneNumber(dto.getPhoneNumber());
+                    cod.setInstructions(dto.getInstructions());
+                    return convertToDTO(paymentMethodRepository.save(cod));
+                }
+                throw new IllegalStateException("Mismatched type: expected COD but found " + existing.getClass().getSimpleName());
+            }
+            case BANK_TRANSFER -> {
+                if (existing instanceof BankTransfer) {
+                    BankTransfer bt = (BankTransfer) existing;
+                    bt.setAccountName(dto.getAccountName());
+                    bt.setAccountNumber(dto.getAccountNumber());
+                    bt.setBankName(dto.getBankName());
+                    return convertToDTO(paymentMethodRepository.save(bt));
+                }
+                throw new IllegalStateException("Mismatched type: expected BankTransfer but found " + existing.getClass().getSimpleName());
+            }
+            case E_WALLET -> {
+                if (existing instanceof EWallet) {
+                    EWallet ew = (EWallet) existing;
+                    ew.setAccountName(dto.getAccountName());
+                    ew.setVirtualAccountNumber(dto.getVirtualAccountNumber());
+                    ew.setInstructions(dto.getInstructions());
+                    return convertToDTO(paymentMethodRepository.save(ew));
+                }
+                throw new IllegalStateException("Mismatched type: expected EWallet but found " + existing.getClass().getSimpleName());
+            }
+            default -> throw new IllegalArgumentException("Unknown payment method type: " + dto.getPaymentMethod());
+        }
     }
+
 
     @Override
     public Page<PaymentMethodDTO> findAllPaymentMethod(int page, int size, Boolean isActive, String paymentMethod, String sortBy, String sortDirection) {
@@ -137,8 +181,21 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     }
 
     @Override
-    public ArrayList<Object> deletePaymentMethod(String id) {
-        return new ArrayList<>();
+    public Map<String, Object> deletePaymentMethod(String id) {
+        UUID uuid = UUID.fromString(id);
+        PaymentMethod paymentMethod = paymentMethodRepository.findById(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Payment method not found with id: " + id));
+
+        paymentMethod.setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
+        paymentMethod.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        paymentMethodRepository.save(paymentMethod);
+
+        Map<String, Object> deletedData = new HashMap<>();
+        deletedData.put("id", paymentMethod.getId());
+        deletedData.put("deleted_at", paymentMethod.getDeletedAt());
+
+        return deletedData;
     }
 
     private PaymentMethodDTO convertToDTO(PaymentMethod method) {

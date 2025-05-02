@@ -36,7 +36,6 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testImplementation("org.seleniumhq.selenium:selenium-java:$seleniumJavaVersion")
@@ -47,8 +46,10 @@ dependencies {
     implementation("jakarta.persistence:jakarta.persistence-api")
     runtimeOnly ("org.postgresql:postgresql")
     implementation ("org.projectlombok:lombok")
-    compileOnly ("org.projectlombok:lombok")
-    annotationProcessor ("org.projectlombok:lombok")
+    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.mockito:mockito-junit-jupiter")
+    testImplementation("org.springframework.security:spring-security-test")
 
     // DARI REPO AUTHENTICATION
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
@@ -57,9 +58,6 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
     testImplementation("org.springframework.security:spring-security-test:6.0.2")
     implementation("org.springframework.boot:spring-boot-starter-security")
-
-
-
 }
 
 tasks.test {

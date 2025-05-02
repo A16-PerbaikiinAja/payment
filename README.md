@@ -17,10 +17,18 @@
 
 ---
 
+📌 **Implementasi Milestone 25%**:
+
+> Pada milestone 25% ini, saya telah mengerjakan pondasi utama untuk fitur PaymentMethod, mencakup model, controller, service, DTO, repository, dan juga enum untuk tipe metode pembayaran. Selain itu, telah dilakukan integrasi dengan service Authentication untuk otorisasi berbasis JWT, serta penerapan role-based security pada endpoint menggunakan anotasi @PreAuthorize dan @PermitAll. 
+> Dari sisi DevOps, pipeline CI/CD awal telah diterapkan menggunakan GitHub Actions untuk otomatisasi build dan deployment ke EC2. 
+> Fitur tambahan seperti concurrency handling, monitoring, dan infrastructure as code (IaC) masih dalam tahap perencanaan dan akan mulai dipertimbangkan pada milestone berikutnya.
+
+---
+
 #### 1. **Software Design 🛠️**
 
 **SOLID Principles ✅**
-- **Single Responsibility Principle (SRP)**: Kode yang dibuat sudah mengikuti prinsip ini, seperti controller yang hanya menangani request dan response, service yang menangani bussiness logic, dan model yang merepresentasikan data.
+- **Single Responsibility Principle (SRP)**: Kode yang dibuat sudah mengikuti prinsip ini, seperti controller yang hanya menangani request dan response, service yang menangani business logic, dan model yang merepresentasikan data.
 - **Open/Closed Principle (OCP)**: Sudah mengimplementasikan interface seperti `PaymentMethodService` yang memudahkan penambahan metode pembayaran baru tanpa mengubah kode yang ada.
 - **Liskov Substitution Principle (LSP)**: Penggunaan inheritance dengan `PaymentMethod` sebagai superclass dan `COD`, `BankTransfer`, dan `EWallet` sebagai subclass sudah sesuai dengan prinsip ini.
 - **Interface Segregation Principle (ISP)**: Interface yang digunakan sudah tersegmentasi, seperti `PaymentMethodService` yang hanya punya method yang relevan untuk class yang mengimplementasikannya.
@@ -83,11 +91,11 @@
 
 **CI/CD (Continuous Integration/Continuous Deployment) 💻**
 - Sudah diterapkan menggunakan **GitHub Actions**. Setiap perubahan pada branch `main` memicu proses build, analisis kode statis, dan deploy ke EC2.
-- Deployment dilakukan **SETELAH** job testing dan quality check (seperti PMD analysis dan Scorecard security analysis) berhasil. Hal ini memastikan kalau hanya kode yang telah diuji dengan baik yang akan dideploy ke production environment.
+- Deployment dilakukan **setelah** job testing dan quality check (seperti PMD analysis dan Scorecard security analysis) berhasil. Hal ini memastikan kalau hanya kode yang telah diuji dengan baik yang akan dideploy ke production environment.
 
 **Deployment Strategies 🔧**
 - **Automated Deployment**: Setiap kali ada perubahan pada `main`, aplikasi di-build dan dideploy otomatis ke EC2.
-- **Rollback Strategy (TBA)**: Belum ada rollback strategy saat deploy gagal. Bisa ditambahkan, misalnya dengan menggunakan tag pada Docker image yang bisa digunakan untuk rollback ke versi sebelumnya kalau terjadi masalah.
+- **Rollback Strategy (TBA)**: Belum ada rollback strategy jika proses deployment gagal. Bisa ditambahkan, misalnya dengan menggunakan tag pada Docker image yang bisa digunakan untuk rollback ke versi sebelumnya kalau terjadi masalah.
 
 **Containerization 🐳**
 - Menggunakan **Docker** untuk membangun image dan meng-deploy aplikasi ke EC2. Docker memastikan aplikasi berjalan konsisten di berbagai environment (dev, staging, production).

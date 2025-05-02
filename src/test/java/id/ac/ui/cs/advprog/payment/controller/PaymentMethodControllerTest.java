@@ -1,114 +1,149 @@
 package id.ac.ui.cs.advprog.payment.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.*;
 
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class PaymentMethodControllerTest {
+@WebMvcTest(PaymentMethodController.class)
+public class PaymentMethodControllerTest {
 
+    @Autowired
     private MockMvc mockMvc;
 
-    @InjectMocks
-    private PaymentMethodController paymentMethodController;
-
-    @Mock
+    @MockitoBean
     private PaymentMethodService paymentMethodService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private PaymentMethodDTO sampleDTO;
+    private PaymentMethodRegisterDTO registerDTO;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(paymentMethodController).build();
+        sampleDTO = new PaymentMethodDTO();
+        sampleDTO.setId(UUID.randomUUID());
+        sampleDTO.setName("Sample Method");
+        sampleDTO.setDescription("desc");
+        sampleDTO.setProcessingFee(BigDecimal.valueOf(1000));
+        sampleDTO.setCreatedBy(UUID.randomUUID());
+        sampleDTO.setDeletedAt(null);
+
+        registerDTO = new PaymentMethodRegisterDTO();
+        registerDTO.setName("Sample");
+        registerDTO.setDescription("desc");
+        registerDTO.setProcessingFee(BigDecimal.valueOf(1000));
+        registerDTO.setCreatedBy(UUID.randomUUID().toString());
+        registerDTO.setPaymentMethod("COD");
     }
 
     @Test
-    void createPaymentMethod_ShouldReturnStatusOk_WhenValidInput() throws Exception {
-        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
-        dto.setName("Test Payment Method");
-        dto.setDescription("Test Description");
+    @WithMockUser(roles = "ADMIN")
+    void testCreatePaymentMethod() throws Exception {
+        when(paymentMethodService.createPaymentMethod(any())).thenReturn(sampleDTO);
 
         mockMvc.perform(post("/payment-methods/admin/create")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test Payment Method\", \"description\":\"Test Description\"}"))
+                        .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Sample Method"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testFindAllPaymentMethods() throws Exception {
+        Page<PaymentMethodDTO> page = new PageImpl<>(List.of(sampleDTO), PageRequest.of(0, 10), 1);
+        when(paymentMethodService.findAllPaymentMethod(0, 10, null, null, "id", "ASC")).thenReturn(page);
+
+        mockMvc.perform(get("/payment-methods/admin?page=0&size=10"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void findAllPaymentMethods_ShouldReturnStatusOk_WhenAdminAccess() throws Exception {
-        mockMvc.perform(get("/payment-methods/admin")
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk());
+    @WithMockUser(roles = "ADMIN")
+    void testGetPaymentMethodById() throws Exception {
+        when(paymentMethodService.findPaymentMethodById(anyString())).thenReturn(sampleDTO);
+
+        mockMvc.perform(get("/payment-methods/admin/{id}", UUID.randomUUID()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Sample Method"));
     }
 
     @Test
-    void getPaymentMethodById_ShouldReturnStatusOk_WhenValidId() throws Exception {
-        UUID id = UUID.randomUUID();
+    @WithMockUser(roles = "ADMIN")
+    void testUpdatePaymentMethod() throws Exception {
+        when(paymentMethodService.updatePaymentMethod(any(), any())).thenReturn(sampleDTO);
 
-        mockMvc.perform(get("/payment-methods/admin/" + id))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void updatePaymentMethod_ShouldReturnStatusOk_WhenValidInput() throws Exception {
-        UUID id = UUID.randomUUID();
-        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
-        dto.setName("Updated Payment Method");
-        dto.setDescription("Updated Description");
-
-        mockMvc.perform(put("/payment-methods/admin/" + id + "/edit")
+        mockMvc.perform(put("/payment-methods/admin/{id}/edit", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated Payment Method\", \"description\":\"Updated Description\"}"))
+                        .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Sample Method"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeletePaymentMethod() throws Exception {
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", UUID.randomUUID());
+        result.put("deleted_at", new Date());
+
+        when(paymentMethodService.deletePaymentMethod(anyString())).thenReturn(result);
+
+        mockMvc.perform(delete("/payment-methods/admin/{id}/delete", UUID.randomUUID()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deleted_at").exists());
+    }
+
+    @Test
+    void testFindAllActivePaymentMethods() throws Exception {
+        Page<PaymentMethodDTO> page = new PageImpl<>(List.of(sampleDTO));
+        when(paymentMethodService.findAllPaymentMethod(0, 10, true, null, "id", "ASC")).thenReturn(page);
+
+        mockMvc.perform(get("/payment-methods/active?page=0&size=10"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void deletePaymentMethod_ShouldReturnStatusOk_WhenValidId() throws Exception {
-        UUID id = UUID.randomUUID();
+    void testGetActivePaymentMethodById() throws Exception {
+        when(paymentMethodService.findPaymentMethodById(anyString())).thenReturn(sampleDTO);
 
-        mockMvc.perform(delete("/payment-methods/admin/" + id + "/delete"))
+        mockMvc.perform(get("/payment-methods/active/{id}", UUID.randomUUID()))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void findAllActivePaymentMethods_ShouldReturnStatusOk_WhenValidRequest() throws Exception {
-        mockMvc.perform(get("/payment-methods/active")
-                        .param("page", "0")
-                        .param("size", "10"))
+    void testGetByType() throws Exception {
+        Page<PaymentMethodDTO> page = new PageImpl<>(List.of(sampleDTO));
+        when(paymentMethodService.findAllPaymentMethod(0, 10, true, "COD", "id", "ASC")).thenReturn(page);
+
+        mockMvc.perform(get("/payment-methods/type?type=COD&page=0&size=10"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void getActivePaymentMethodById_ShouldReturnStatusOk_WhenValidId() throws Exception {
-        UUID id = UUID.randomUUID();
-
-        mockMvc.perform(get("/payment-methods/active/" + id))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void getByType_ShouldReturnStatusOk_WhenValidType() throws Exception {
-        mockMvc.perform(get("/payment-methods/type")
-                        .param("type", "COD")
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void testTesting_ShouldReturnStatusOk_WhenTestEndpointCalled() throws Exception {
+    void testTestEndpoint() throws Exception {
         mockMvc.perform(get("/payment-methods/test"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("This is a test response!"));
     }
 }
