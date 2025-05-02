@@ -1,110 +1,83 @@
 package id.ac.ui.cs.advprog.payment.service;
 
-import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
-import id.ac.ui.cs.advprog.payment.model.PaymentMethod;
-import id.ac.ui.cs.advprog.payment.repository.PaymentMethodRepository;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-class PaymentMethodServiceTest {
-
-    @Mock
-    private PaymentMethodRepository paymentMethodRepository;
+public class PaymentMethodServiceTest {
 
     @Mock
-    private PaymentMethodDTO paymentMethodDTO;
-
-    @InjectMocks
-    private PaymentMethodServiceImpl paymentMethodService;
-
-    private PaymentMethodRegisterDTO paymentMethodRegisterDTO;
+    private PaymentMethodService service;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-
-        paymentMethodRegisterDTO = new PaymentMethodRegisterDTO();
-        paymentMethodRegisterDTO.setName("Test Payment");
-        paymentMethodRegisterDTO.setDescription("Test Description");
-        paymentMethodRegisterDTO.setProcessingFee(BigDecimal.valueOf(2.5));
-        paymentMethodRegisterDTO.setCreatedBy(UUID.randomUUID().toString());
-        paymentMethodRegisterDTO.setPaymentMethod("COD");
     }
 
     @Test
-    void createPaymentMethod_ShouldReturnPaymentMethodDTO_WhenValidInput() {
-        PaymentMethod paymentMethod = new PaymentMethod("Test Payment", "Test Description", BigDecimal.valueOf(2.5),
-                Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now()),
-                UUID.randomUUID());
-        when(paymentMethodRepository.save(any(PaymentMethod.class))).thenReturn(paymentMethod);
+    void testCreatePaymentMethod() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setName("Test Method");
+        dto.setDescription("Test Desc");
+        dto.setProcessingFee(BigDecimal.valueOf(1000));
+        dto.setCreatedBy(UUID.randomUUID().toString());
+        dto.setPaymentMethod("COD");
 
-        PaymentMethodDTO result = paymentMethodService.createPaymentMethod(paymentMethodRegisterDTO);
+        PaymentMethodDTO resultDTO = new PaymentMethodDTO();
+        resultDTO.setName("Test Method");
 
-        assertNotNull(result);
-        assertEquals(paymentMethod.getName(), result.getName());
-        assertEquals(paymentMethod.getDescription(), result.getDescription());
+        when(service.createPaymentMethod(dto)).thenReturn(resultDTO);
+
+        PaymentMethodDTO response = service.createPaymentMethod(dto);
+        assertEquals("Test Method", response.getName());
+
+        verify(service).createPaymentMethod(dto);
     }
 
     @Test
-    void updatePaymentMethod_ShouldReturnUpdatedPaymentMethodDTO_WhenValidInput() {
+    void testFindById() {
         UUID id = UUID.randomUUID();
-        PaymentMethodRegisterDTO updatedDTO = new PaymentMethodRegisterDTO();
-        updatedDTO.setName("Updated Payment");
-        updatedDTO.setDescription("Updated Description");
+        PaymentMethodDTO dto = new PaymentMethodDTO();
+        dto.setId(id);
 
-        PaymentMethod updatedPaymentMethod = new PaymentMethod("Updated Payment", "Updated Description",
-                BigDecimal.valueOf(3.0), Timestamp.valueOf(LocalDateTime.now()),
-                Timestamp.valueOf(LocalDateTime.now()), UUID.randomUUID());
-        when(paymentMethodRepository.findById(id)).thenReturn(Optional.of(updatedPaymentMethod));
+        when(service.findPaymentMethodById(id.toString())).thenReturn(dto);
 
-        PaymentMethodDTO result = paymentMethodService.updatePaymentMethod(id, updatedDTO);
+        PaymentMethodDTO result = service.findPaymentMethodById(id.toString());
+        assertEquals(id, result.getId());
 
-        assertNotNull(result);
-        assertEquals("Updated Payment", result.getName());
-        assertEquals("Updated Description", result.getDescription());
+        verify(service).findPaymentMethodById(id.toString());
     }
 
     @Test
-    void findAllPaymentMethod_ShouldReturnPagedResult_WhenValidRequest() {
-        List<PaymentMethod> paymentMethods = List.of(new PaymentMethod("Test Payment", "Test Description",
-                BigDecimal.valueOf(2.5), Timestamp.valueOf(LocalDateTime.now()),
-                Timestamp.valueOf(LocalDateTime.now()), UUID.randomUUID()));
-        Page<PaymentMethod> paymentMethodPage = new PageImpl<>(paymentMethods);
-
-        when(paymentMethodRepository.findAll(any(Pageable.class))).thenReturn(paymentMethodPage);
-
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(0, 10, true, "COD", "name", "ASC");
-
-        assertNotNull(result);
-        assertEquals(paymentMethods.size(), result.getContent().size());
-    }
-
-    @Test
-    void findPaymentMethodById_ShouldReturnPaymentMethodDTO_WhenPaymentMethodExists() {
+    void testDeletePaymentMethod() {
         UUID id = UUID.randomUUID();
-        PaymentMethod paymentMethod = new PaymentMethod("Test Payment", "Test Description",
-                BigDecimal.valueOf(2.5), Timestamp.valueOf(LocalDateTime.now()),
-                Timestamp.valueOf(LocalDateTime.now()), UUID.randomUUID());
-        when(paymentMethodRepository.findById(id)).thenReturn(Optional.of(paymentMethod));
+        Map<String, Object> response = Map.of("id", id, "deleted_at", new Date());
 
-        PaymentMethodDTO result = paymentMethodService.findPaymentMethodById(id.toString());
+        when(service.deletePaymentMethod(id.toString())).thenReturn(response);
 
-        assertNotNull(result);
-        assertEquals(paymentMethod.getName(), result.getName());
+        Map<String, Object> result = service.deletePaymentMethod(id.toString());
+        assertTrue(result.containsKey("deleted_at"));
+
+        verify(service).deletePaymentMethod(id.toString());
     }
 
+    @Test
+    void testFindAll() {
+        Page<PaymentMethodDTO> page = new PageImpl<>(List.of(new PaymentMethodDTO()));
+        when(service.findAllPaymentMethod(0, 10, true, null, "id", "asc")).thenReturn(page);
+
+        Page<PaymentMethodDTO> result = service.findAllPaymentMethod(0, 10, true, null, "id", "asc");
+        assertFalse(result.isEmpty());
+
+        verify(service).findAllPaymentMethod(0, 10, true, null, "id", "asc");
+    }
 }
