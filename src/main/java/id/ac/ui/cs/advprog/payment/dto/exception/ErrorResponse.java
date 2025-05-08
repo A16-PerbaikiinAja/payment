@@ -11,5 +11,8 @@ public class ErrorResponse {
     private String message;
 
     public ErrorResponse(int status, String error, String message) {
+        this.status = status;
+        this.error = error;
+        this.message = message;
     }
 }
