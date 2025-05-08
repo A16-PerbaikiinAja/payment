@@ -14,18 +14,28 @@ public enum ErrorCode {
     private final String message;
 
     ErrorCode(HttpStatus status, String reasonPhrase, String message) {
+        this.status = status;
+        this.reasonPhrase = reasonPhrase;
+        this.message = message;
     }
 
     public HttpStatus getStatus() {
+        return status;
     }
 
     public String getReasonPhrase() {
+        return reasonPhrase;
     }
 
     public String getMessage() {
+        return message;
     }
 
     public ErrorResponse toErrorResponse() {
+        return new ErrorResponse(
+                this.status.value(),
+                this.status.getReasonPhrase(),
+                this.message
         );
     }
 }
