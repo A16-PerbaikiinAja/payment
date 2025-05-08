@@ -1,11 +1,13 @@
 package id.ac.ui.cs.advprog.payment.controller;
 
 import id.ac.ui.cs.advprog.payment.constant.ErrorCode;
+import id.ac.ui.cs.advprog.payment.constant.Status;
 import id.ac.ui.cs.advprog.payment.dto.Response;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.CustomPageResponse;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,9 +38,59 @@ public class PaymentMethodController {
     // Create Payment Method (C) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/create")
-    public ResponseEntity<?> createPaymentMethod(@RequestBody PaymentMethodRegisterDTO paymentMethodToRegister) {
-        PaymentMethodDTO result = paymentMethodService.createPaymentMethod(paymentMethodToRegister);
-        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    public ResponseEntity<?> createPaymentMethod(@Valid @RequestBody PaymentMethodRegisterDTO paymentMethodToRegister) {
+        try {
+
+            if (paymentMethodToRegister.getPaymentMethod() == null || paymentMethodToRegister.getPaymentMethod().isBlank()) {
+                throw new IllegalArgumentException("paymentMethod cannot be null or empty");
+            }
+
+            switch (paymentMethodToRegister.getPaymentMethod().toUpperCase()) {
+                case "COD" -> {
+                    if (paymentMethodToRegister.getPhoneNumber() == null || paymentMethodToRegister.getPhoneNumber().isBlank()) {
+                        throw new IllegalArgumentException("phoneNumber is required for COD");
+                    }
+                    if (paymentMethodToRegister.getInstructions() == null || paymentMethodToRegister.getInstructions().isBlank()) {
+                        throw new IllegalArgumentException("instruction is required for COD");
+                    }
+                }
+                case "E_WALLET" -> {
+                    if (paymentMethodToRegister.getAccountName() == null || paymentMethodToRegister.getAccountName().isBlank()) {
+                        throw new IllegalArgumentException("accountName is required for E_WALLET");
+                    }
+                    if (paymentMethodToRegister.getInstructions() == null || paymentMethodToRegister.getInstructions().isBlank()) {
+                        throw new IllegalArgumentException("instruction is required for E_WALLET");
+                    }
+                    if (paymentMethodToRegister.getVirtualAccountNumber() == null || paymentMethodToRegister.getVirtualAccountNumber().isBlank()) {
+                        throw new IllegalArgumentException("virtualAccountNumber is required for E_WALLET");
+                    }
+                }
+                case "BANK_TRANSFER" -> {
+                    if (paymentMethodToRegister.getAccountName() == null || paymentMethodToRegister.getAccountName().isBlank()) {
+                        throw new IllegalArgumentException("accountName is required for BANK_TRANSFER");
+                    }
+                    if (paymentMethodToRegister.getAccountNumber() == null || paymentMethodToRegister.getAccountNumber().isBlank()) {
+                        throw new IllegalArgumentException("accountNumber is required for BANK_TRANSFER");
+                    }
+                    if (paymentMethodToRegister.getBankName() == null || paymentMethodToRegister.getBankName().isBlank()) {
+                        throw new IllegalArgumentException("bankName is required for BANK_TRANSFER");
+                    }
+                }
+                default -> throw new IllegalArgumentException("Unsupported payment method: " + paymentMethodToRegister.getPaymentMethod());
+            }
+
+            PaymentMethodDTO result = paymentMethodService.createPaymentMethod(paymentMethodToRegister);
+            Response response = new Response(Status.success.toString(), "Payment method created successfully", result);
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
+            Response response = new Response(Status.error.toString(), e.getMessage(), null);
+
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            System.out.println(e);
+            return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // View all Payment Methods (R) - Admin Only
