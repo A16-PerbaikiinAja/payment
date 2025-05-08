@@ -1,5 +1,8 @@
 package id.ac.ui.cs.advprog.payment.controller;
 
+import id.ac.ui.cs.advprog.payment.constant.ErrorCode;
+import id.ac.ui.cs.advprog.payment.dto.Response;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.CustomPageResponse;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
@@ -41,9 +44,23 @@ public class PaymentMethodController {
     // View all Payment Methods (R) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public ResponseEntity<?> findAllPaymentMethods(@RequestParam int page, @RequestParam int size) {
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, null, null, "id", "ASC");
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> findAllPaymentMethods(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDirection
+    ) {
+        try {
+            Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, isActive, paymentMethod, sortBy, sortDirection);
+            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(result);
+            Response response = new Response("success", "Payment methods retrieved successfully", customResponse);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println(e);
+            return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // View Payment Method details by ID (R) - Admin Only
