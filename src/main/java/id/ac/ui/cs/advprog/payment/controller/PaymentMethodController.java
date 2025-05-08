@@ -14,21 +14,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
+@CrossOrigin(
+        origins = "http://localhost:3000",
+        allowedHeaders = "*",
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}
+)
 @RequestMapping("/payment-methods")
 public class PaymentMethodController {
 
@@ -119,11 +116,9 @@ public class PaymentMethodController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{id}")
     public ResponseEntity<?> getPaymentMethodById(@PathVariable String id) {
-        PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
-        if (dto.getDeletedAt() != null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment method not found or inactive.");
-        }
-        return ResponseEntity.ok(dto);
+        PaymentMethodDTO result = paymentMethodService.findPaymentMethodById(id);
+        Response response = new Response("success", "Payment method retrieved successfully", result);
+        return ResponseEntity.ok(response);
     }
 
     // Update Payment Method (U) - Admin Only
