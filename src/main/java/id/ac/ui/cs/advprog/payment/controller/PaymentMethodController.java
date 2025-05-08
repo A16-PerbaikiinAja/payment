@@ -143,7 +143,8 @@ public class PaymentMethodController {
     @DeleteMapping("/admin/{id}/delete")
     public ResponseEntity<?> deletePaymentMethod(@PathVariable String id) {
         Map<String, Object> result = paymentMethodService.deletePaymentMethod(id);
-        return ResponseEntity.ok(result);
+        Response response = new Response("success", "Payment method deleted successfully", result);
+        return ResponseEntity.ok(response);
     }
 
     // View all Active Payment Methods (R) - Public (All Users)
