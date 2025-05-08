@@ -129,9 +129,14 @@ public class PaymentMethodController {
     // Update Payment Method (U) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/{id}/edit")
-    public ResponseEntity<?> updatePaymentMethod(@PathVariable UUID id, @RequestBody PaymentMethodRegisterDTO dto) {
+    public ResponseEntity<?> updatePaymentMethod(
+            @PathVariable UUID id,
+            @RequestBody PaymentMethodRegisterDTO dto
+    ) {
         PaymentMethodDTO result = paymentMethodService.updatePaymentMethod(id, dto);
-        return ResponseEntity.ok(result);    }
+        Response response = new Response("success", "Payment method updated successfully", result);
+        return ResponseEntity.ok(response);
+    }
 
     // Delete Payment Method (D) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
