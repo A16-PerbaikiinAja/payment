@@ -5,7 +5,7 @@
 **Kelas: AdvProg - A**
 
 
-### **💲Progress Milestone Payment Service💰**
+### **💲Progress Milestone Payment Service💲**
 
 
 | Komponen                                                                                                     |
@@ -21,7 +21,6 @@
 
 > Pada milestone 25% ini, saya telah mengerjakan pondasi utama untuk fitur PaymentMethod, mencakup model, controller, service, DTO, repository, dan juga enum untuk tipe metode pembayaran. Selain itu, telah dilakukan integrasi dengan service Authentication untuk otorisasi berbasis JWT, serta penerapan role-based security pada endpoint menggunakan anotasi @PreAuthorize dan @PermitAll. 
 > Dari sisi DevOps, pipeline CI/CD awal telah diterapkan menggunakan GitHub Actions untuk otomatisasi build dan deployment ke EC2. 
-> Fitur tambahan seperti concurrency handling, monitoring, dan infrastructure as code (IaC) masih dalam tahap perencanaan dan akan mulai dipertimbangkan pada milestone berikutnya.
 
 ---
 
