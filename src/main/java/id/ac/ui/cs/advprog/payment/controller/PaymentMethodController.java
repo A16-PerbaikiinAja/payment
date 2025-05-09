@@ -171,7 +171,7 @@ public class PaymentMethodController {
     public ResponseEntity<?> getActivePaymentMethodById(@PathVariable String id) {
         try {
             PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
-            // Patikan Active
+            // Pastikan Active
             if (dto == null || dto.getDeletedAt() != null) {
                 Response response = new Response("error", "Active payment method not found.", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -189,10 +189,25 @@ public class PaymentMethodController {
 
     @PermitAll
     @GetMapping("/type")
-    public ResponseEntity<?> getByType(@RequestParam("type") String type, @RequestParam int page, @RequestParam int size) {
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, true, type, "id", "ASC");
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> getByType(@RequestParam("type") String type, @RequestParam int page, @RequestParam int size,
+                                       @RequestParam(required = false, defaultValue = "id") String sortBy,
+                                       @RequestParam(required = false, defaultValue = "ASC") String sortDirection
+    ) {
+        try {
+            // Pastikan Active
+            Page<PaymentMethodDTO> resultPage = paymentMethodService.findAllPaymentMethod(page, size, true, type, sortBy, sortDirection);
+            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(resultPage);
+            Response response = new Response("success", "Active payment methods by type retrieved successfully", customResponse);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error retrieving payment methods by type: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("code", "5000");
+            errorResponse.put("message", "Internal Server Error");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
     // For testing (no security, public)
     @PermitAll
