@@ -145,9 +145,24 @@ public class PaymentMethodController {
     // View all Active Payment Methods (R) - Public (All Users)
     @PermitAll
     @GetMapping("/active")
-    public ResponseEntity<?> findAllActivePaymentMethods(@RequestParam int page, @RequestParam int size) {
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, true, null, "id", "ASC");
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> findAllActivePaymentMethods(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDirection
+    ) {
+        try {
+            Page<PaymentMethodDTO> resultPage = paymentMethodService.findAllPaymentMethod(page, size, true, paymentMethod, sortBy, sortDirection);
+
+            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(resultPage);
+            Response response = new Response("success", "Payment methods retrieved successfully", customResponse);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.err.println("Error retrieving active payment methods: " + e.getMessage());
+            return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // View Active Payment Method details (R) - Public (All Users)
