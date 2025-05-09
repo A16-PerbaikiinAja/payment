@@ -169,11 +169,22 @@ public class PaymentMethodController {
     @PermitAll
     @GetMapping("/active/{id}")
     public ResponseEntity<?> getActivePaymentMethodById(@PathVariable String id) {
-        PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
-        if (dto.getDeletedAt() != null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment method not found or inactive.");
+        try {
+            PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
+            // Patikan Active
+            if (dto == null || dto.getDeletedAt() != null) {
+                Response response = new Response("error", "Active payment method not found.", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+            Response response = new Response("success", "Active payment methods retrieved successfully", dto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error retrieving active payment method by ID: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("code", "5000");
+            errorResponse.put("message", "Internal Server Error");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.ok(dto);
     }
 
     @PermitAll

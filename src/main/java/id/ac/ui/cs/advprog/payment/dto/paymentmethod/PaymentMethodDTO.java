@@ -29,4 +29,5 @@ public class PaymentMethodDTO {
     private Timestamp deletedAt;
 
     private String paymentMethod;
+
 }
