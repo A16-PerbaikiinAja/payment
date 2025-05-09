@@ -89,9 +89,9 @@
 
 **High-Level Networking 🌐**
 
-* Fitur `PaymentMethod` dikembangkan sebagai RESTful API menggunakan HTTP sebagai protokol komunikasi utama. Semua operasi CRUD tersedia dalam bentuk endpoint HTTP (`GET`, `POST`, `PUT`, `DELETE`) dan dapat diakses oleh client seperti frontend berbasis Next.js.
-* Komunikasi bersifat **stateless**, di mana setiap request membawa konteks autentikasi melalui token JWT. Tidak ada penyimpanan sesi server-side, yang menjadikan API lebih ringan dan scalable.
-* **CORS** telah diaktifkan agar komunikasi antara frontend (`localhost:3000`) dan backend dapat berjalan tanpa konflik keamanan.
+* `PaymentMethodController` ini mengimplementasikan pola komunikasi **unary** melalui HTTP REST API, di mana setiap endpoint menerima satu request dan mereturn satu respons. Hal ini cocok untuk kebutuhan operasi CRUD (Create, Read, Update, Delete) karena bersifat stateless, efisien, dan mudah diintegrasikan dengan frontend berbasis HTTP seperti Next.js. 
+* Komunikasi bersifat **stateless**, di mana setiap request membawa konteks autentikasi melalui token JWT. Tidak ada penyimpanan sesi server-side, yang menjadikan API lebih scalable.
+* **CORS** telah diaktifkan supaya komunikasi antara frontend (`localhost:3000`) dan backend bisa berjalan tanpa konflik keamanan.
 * Mekanisme autentikasi menggunakan **JWT (JSON Web Token)** memastikan bahwa hanya user yang telah terverifikasi dan authorized yang bisa mengakses endpoint spesifik.
 * Endpoint juga mendukung pengamanan tambahan melalui anotasi `@PreAuthorize` untuk endpoint sensitif dan `@PermitAll` untuk endpoint publik.
 
