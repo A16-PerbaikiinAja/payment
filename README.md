@@ -5,7 +5,7 @@
 **Kelas: AdvProg - A**
 
 
-### **💲Progress Milestone Payment Service💰**
+### **💲Progress Milestone Payment Service💲**
 
 
 | Komponen                                                                                                     |
@@ -17,11 +17,16 @@
 
 ---
 
-📌 **Implementasi Milestone 25%**:
+📌 **Progress Milestone 50%**
 
-> Pada milestone 25% ini, saya telah mengerjakan pondasi utama untuk fitur PaymentMethod, mencakup model, controller, service, DTO, repository, dan juga enum untuk tipe metode pembayaran. Selain itu, telah dilakukan integrasi dengan service Authentication untuk otorisasi berbasis JWT, serta penerapan role-based security pada endpoint menggunakan anotasi @PreAuthorize dan @PermitAll. 
+> Pada milestone 50% ini, saya telah mengerjakan dan menguji pada Postman seluruh fitur utama dari `PaymentMethod`, termasuk seluruh endpoint untuk operasi CRUD dengan dukungan role-based access. Salah satu yang terpenting yaitu penerapan **High-Level Networking** menggunakan protokol **HTTP-based RESTful API** yang memfasilitasi komunikasi antara frontend dan backend. Implementasi ini mendukung komunikasi client-server yang stabil dan aman. 
+
+---
+
+📌 **Progress Milestone 25%**:
+
+> Pada milestone 25% ini, saya telah mengerjakan pondasi utama untuk fitur `PaymentMethod`, mencakup model, controller, service, DTO, repository, dan juga enum untuk tipe metode pembayaran. Selain itu, telah dilakukan integrasi dengan service Authentication untuk otorisasi berbasis JWT, serta penerapan role-based security pada endpoint menggunakan anotasi @PreAuthorize dan @PermitAll. 
 > Dari sisi DevOps, pipeline CI/CD awal telah diterapkan menggunakan GitHub Actions untuk otomatisasi build dan deployment ke EC2. 
-> Fitur tambahan seperti concurrency handling, monitoring, dan infrastructure as code (IaC) masih dalam tahap perencanaan dan akan mulai dipertimbangkan pada milestone berikutnya.
 
 ---
 
@@ -82,8 +87,13 @@
 **Asynchronous (TBA)**
 - Belum ada implementasi untuk mengelola asynchronous.
 
-**High-Level Networking (TBA)**
-- Karena app ini akan menggunakan REST API, high-level networking seperti penggunaan API Gateway bisa dipertimbangkan.
+**High-Level Networking 🌐**
+
+* `PaymentMethodController` ini mengimplementasikan pola komunikasi **unary** melalui HTTP REST API, di mana setiap endpoint menerima satu request dan mereturn satu respons. Hal ini cocok untuk kebutuhan operasi CRUD (Create, Read, Update, Delete) karena bersifat stateless, efisien, dan mudah diintegrasikan dengan frontend berbasis HTTP seperti Next.js. 
+* Komunikasi bersifat **stateless**, di mana setiap request membawa konteks autentikasi melalui token JWT. Tidak ada penyimpanan sesi server-side, yang menjadikan API lebih scalable.
+* **CORS** telah diaktifkan supaya komunikasi antara frontend (`localhost:3000`) dan backend bisa berjalan tanpa konflik keamanan.
+* Mekanisme autentikasi menggunakan **JWT (JSON Web Token)** memastikan bahwa hanya user yang telah terverifikasi dan authorized yang bisa mengakses endpoint spesifik.
+* Endpoint juga mendukung pengamanan tambahan melalui anotasi `@PreAuthorize` untuk endpoint sensitif dan `@PermitAll` untuk endpoint publik.
 
 ---
 

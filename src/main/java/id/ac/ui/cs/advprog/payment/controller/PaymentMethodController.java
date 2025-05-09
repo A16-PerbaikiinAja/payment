@@ -1,29 +1,31 @@
 package id.ac.ui.cs.advprog.payment.controller;
 
+import id.ac.ui.cs.advprog.payment.constant.ErrorCode;
+import id.ac.ui.cs.advprog.payment.constant.Status;
+import id.ac.ui.cs.advprog.payment.dto.Response;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.CustomPageResponse;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
+@CrossOrigin(
+        origins = "http://localhost:3000",
+        allowedHeaders = "*",
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}
+)
 @RequestMapping("/payment-methods")
 public class PaymentMethodController {
 
@@ -33,70 +35,179 @@ public class PaymentMethodController {
     // Create Payment Method (C) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/create")
-    public ResponseEntity<?> createPaymentMethod(@RequestBody PaymentMethodRegisterDTO paymentMethodToRegister) {
-        PaymentMethodDTO result = paymentMethodService.createPaymentMethod(paymentMethodToRegister);
-        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    public ResponseEntity<?> createPaymentMethod(@Valid @RequestBody PaymentMethodRegisterDTO paymentMethodToRegister) {
+        try {
+
+            if (paymentMethodToRegister.getPaymentMethod() == null || paymentMethodToRegister.getPaymentMethod().isBlank()) {
+                throw new IllegalArgumentException("paymentMethod cannot be null or empty");
+            }
+
+            switch (paymentMethodToRegister.getPaymentMethod().toUpperCase()) {
+                case "COD" -> {
+                    if (paymentMethodToRegister.getPhoneNumber() == null || paymentMethodToRegister.getPhoneNumber().isBlank()) {
+                        throw new IllegalArgumentException("phoneNumber is required for COD");
+                    }
+                    if (paymentMethodToRegister.getInstructions() == null || paymentMethodToRegister.getInstructions().isBlank()) {
+                        throw new IllegalArgumentException("instruction is required for COD");
+                    }
+                }
+                case "E_WALLET" -> {
+                    if (paymentMethodToRegister.getAccountName() == null || paymentMethodToRegister.getAccountName().isBlank()) {
+                        throw new IllegalArgumentException("accountName is required for E_WALLET");
+                    }
+                    if (paymentMethodToRegister.getInstructions() == null || paymentMethodToRegister.getInstructions().isBlank()) {
+                        throw new IllegalArgumentException("instruction is required for E_WALLET");
+                    }
+                    if (paymentMethodToRegister.getVirtualAccountNumber() == null || paymentMethodToRegister.getVirtualAccountNumber().isBlank()) {
+                        throw new IllegalArgumentException("virtualAccountNumber is required for E_WALLET");
+                    }
+                }
+                case "BANK_TRANSFER" -> {
+                    if (paymentMethodToRegister.getAccountName() == null || paymentMethodToRegister.getAccountName().isBlank()) {
+                        throw new IllegalArgumentException("accountName is required for BANK_TRANSFER");
+                    }
+                    if (paymentMethodToRegister.getAccountNumber() == null || paymentMethodToRegister.getAccountNumber().isBlank()) {
+                        throw new IllegalArgumentException("accountNumber is required for BANK_TRANSFER");
+                    }
+                    if (paymentMethodToRegister.getBankName() == null || paymentMethodToRegister.getBankName().isBlank()) {
+                        throw new IllegalArgumentException("bankName is required for BANK_TRANSFER");
+                    }
+                }
+                default -> throw new IllegalArgumentException("Unsupported payment method: " + paymentMethodToRegister.getPaymentMethod());
+            }
+
+            PaymentMethodDTO result = paymentMethodService.createPaymentMethod(paymentMethodToRegister);
+            Response response = new Response(Status.success.toString(), "Payment method created successfully", result);
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
+            Response response = new Response(Status.error.toString(), e.getMessage(), null);
+
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            System.out.println(e);
+            return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // View all Payment Methods (R) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public ResponseEntity<?> findAllPaymentMethods(@RequestParam int page, @RequestParam int size) {
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, null, null, "id", "ASC");
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> findAllPaymentMethods(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDirection
+    ) {
+        try {
+            Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, isActive, paymentMethod, sortBy, sortDirection);
+            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(result);
+            Response response = new Response("success", "Payment methods retrieved successfully", customResponse);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println(e);
+            return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // View Payment Method details by ID (R) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{id}")
     public ResponseEntity<?> getPaymentMethodById(@PathVariable String id) {
-        PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
-        if (dto.getDeletedAt() != null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment method not found or inactive.");
-        }
-        return ResponseEntity.ok(dto);
+        PaymentMethodDTO result = paymentMethodService.findPaymentMethodById(id);
+        Response response = new Response("success", "Payment method retrieved successfully", result);
+        return ResponseEntity.ok(response);
     }
 
     // Update Payment Method (U) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/{id}/edit")
-    public ResponseEntity<?> updatePaymentMethod(@PathVariable UUID id, @RequestBody PaymentMethodRegisterDTO dto) {
+    public ResponseEntity<?> updatePaymentMethod(
+            @PathVariable UUID id,
+            @RequestBody PaymentMethodRegisterDTO dto
+    ) {
         PaymentMethodDTO result = paymentMethodService.updatePaymentMethod(id, dto);
-        return ResponseEntity.ok(result);    }
+        Response response = new Response("success", "Payment method updated successfully", result);
+        return ResponseEntity.ok(response);
+    }
 
     // Delete Payment Method (D) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/{id}/delete")
     public ResponseEntity<?> deletePaymentMethod(@PathVariable String id) {
         Map<String, Object> result = paymentMethodService.deletePaymentMethod(id);
-        return ResponseEntity.ok(result);
+        Response response = new Response("success", "Payment method deleted successfully", result);
+        return ResponseEntity.ok(response);
     }
 
     // View all Active Payment Methods (R) - Public (All Users)
     @PermitAll
     @GetMapping("/active")
-    public ResponseEntity<?> findAllActivePaymentMethods(@RequestParam int page, @RequestParam int size) {
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, true, null, "id", "ASC");
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> findAllActivePaymentMethods(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDirection
+    ) {
+        try {
+            Page<PaymentMethodDTO> resultPage = paymentMethodService.findAllPaymentMethod(page, size, true, paymentMethod, sortBy, sortDirection);
+
+            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(resultPage);
+            Response response = new Response("success", "Payment methods retrieved successfully", customResponse);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.err.println("Error retrieving active payment methods: " + e.getMessage());
+            return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // View Active Payment Method details (R) - Public (All Users)
     @PermitAll
     @GetMapping("/active/{id}")
     public ResponseEntity<?> getActivePaymentMethodById(@PathVariable String id) {
-        PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
-        if (dto.getDeletedAt() != null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment method not found or inactive.");
+        try {
+            PaymentMethodDTO dto = paymentMethodService.findPaymentMethodById(id);
+            // Pastikan Active
+            if (dto == null || dto.getDeletedAt() != null) {
+                Response response = new Response("error", "Active payment method not found.", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+            Response response = new Response("success", "Active payment methods retrieved successfully", dto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error retrieving active payment method by ID: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("code", "5000");
+            errorResponse.put("message", "Internal Server Error");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.ok(dto);
     }
 
     @PermitAll
     @GetMapping("/type")
-    public ResponseEntity<?> getByType(@RequestParam("type") String type, @RequestParam int page, @RequestParam int size) {
-        Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, true, type, "id", "ASC");
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> getByType(@RequestParam("type") String type, @RequestParam int page, @RequestParam int size,
+                                       @RequestParam(required = false, defaultValue = "id") String sortBy,
+                                       @RequestParam(required = false, defaultValue = "ASC") String sortDirection
+    ) {
+        try {
+            // Pastikan Active
+            Page<PaymentMethodDTO> resultPage = paymentMethodService.findAllPaymentMethod(page, size, true, type, sortBy, sortDirection);
+            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(resultPage);
+            Response response = new Response("success", "Active payment methods by type retrieved successfully", customResponse);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error retrieving payment methods by type: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("code", "5000");
+            errorResponse.put("message", "Internal Server Error");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
     // For testing (no security, public)
     @PermitAll
