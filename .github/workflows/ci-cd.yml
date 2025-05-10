@@ -96,7 +96,7 @@ jobs:
           host: ${{ secrets.AWS_SERVER }}
           username: ec2-user
           key: ${{ secrets.SSH_KEY }}
-          source: "build/libs/*.jar,Dockerfile"
+          source: "build/libs/payment-0.0.1-SNAPSHOT.jar,Dockerfile"
           target: /home/ec2-user/app
 
       - name: SSH and deploy with Docker and create .env
@@ -119,15 +119,8 @@ jobs:
             # Check if the .env file is created correctly
             cat .env
 
-            # Move the JAR file and handle Docker deployment
-            mv build/libs/*.jar app.jar || true
-
-            # Stop and remove any previous containers
-            docker stop springboot-app || true
-            docker rm springboot-app || true
-
             # Build the Docker image
             docker build -t springboot-app .
 
-            # Run the container using the .env file
-            docker run -d -p 8080:8080 --name springboot-app --env-file /home/ec2-user/app/.env -v /home/ec2-user/app/build/libs:/app springboot-app
+            # Run the container using the .env file and correct JAR path
+            docker run -d -p 8080:8080 --name springboot-app --env-file /home/ec2-user/app/.env springboot-app
