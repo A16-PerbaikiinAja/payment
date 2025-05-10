@@ -119,7 +119,7 @@ jobs:
             # Check if the .env file is created correctly
             cat .env
 
-            # Stop and remove the existing container if it's running
+            # Stop and remove any previous containers
             docker stop springboot-app || true
             docker rm springboot-app || true
 
@@ -127,4 +127,4 @@ jobs:
             docker build -t springboot-app .
 
             # Run the container using the .env file and correct JAR path
-            docker run -d -p 8080:8080 --name springboot-app --env-file /home/ec2-user/app/.env springboot-app
+            docker run -d -p 8080:8080 --name springboot-app --env-file /home/ec2-user/app/.env -v /home/ec2-user/app:/app springboot-app
