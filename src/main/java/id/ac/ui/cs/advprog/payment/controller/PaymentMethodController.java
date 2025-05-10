@@ -22,7 +22,7 @@ import java.util.UUID;
 
 @RestController
 @CrossOrigin(
-        origins = "http://localhost:3000",
+        origins = "*",
         allowedHeaders = "*",
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}
 )
