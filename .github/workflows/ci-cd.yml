@@ -70,7 +70,7 @@ jobs:
   # Deployment to EC2 Job
   build-and-deploy:
     runs-on: ubuntu-latest
-    needs: [pmd, scorecard]  # Ensure this job runs only after PMD and Scorecard jobs are successful
+    needs: [ pmd, scorecard ]  # Ensure this job runs only after PMD and Scorecard jobs are successful
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -107,16 +107,27 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /home/ec2-user/app
-            
+
+            # Ensure the .env file is created in the current working directory
             cat <<EOF > .env
             DB_URL=${{ secrets.DB_URL }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             EOF
-            
+
+            # Check if the .env file is created correctly
+            cat .env
+
+            # Move the JAR file and handle Docker deployment
             mv build/libs/*.jar app.jar || true
+
+            # Stop and remove any previous containers
             docker stop springboot-app || true
             docker rm springboot-app || true
+
+            # Build the Docker image
             docker build -t springboot-app .
+
+            # Run the container using the .env file
             docker run -d -p 8080:8080 --name springboot-app --env-file .env springboot-app
