@@ -108,7 +108,7 @@ jobs:
           script: |
             cd /home/ec2-user/app
 
-            # Ensure the .env file is created in the current working directory
+            # Ensure the .env file is created in the correct directory
             cat <<EOF > .env
             DB_URL=${{ secrets.DB_URL }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
@@ -130,4 +130,4 @@ jobs:
             docker build -t springboot-app .
 
             # Run the container using the .env file
-            docker run -d -p 8080:8080 --name springboot-app --env-file .env springboot-app
+            docker run -d -p 8080:8080 --name springboot-app --env-file /home/ec2-user/app/.env -v /home/ec2-user/app/build/libs:/app springboot-app
