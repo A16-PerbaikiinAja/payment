@@ -119,6 +119,10 @@ jobs:
             # Check if the .env file is created correctly
             cat .env
 
+            # Stop and remove the existing container if it's running
+            docker stop springboot-app || true
+            docker rm springboot-app || true
+
             # Build the Docker image
             docker build -t springboot-app .
 
