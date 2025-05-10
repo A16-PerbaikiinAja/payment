@@ -13,5 +13,5 @@ ENV JAVA_OPTS=""
 # Expose port 8080 so the container can accept requests
 EXPOSE 8080
 
-# Run the Spring Boot application
-ENTRYPOINT ["java", "$JAVA_OPTS", "-jar", "/app/app.jar"]
+# Run the Spring Boot application using the shell form of ENTRYPOINT
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
