@@ -4,8 +4,86 @@
 
 **Kelas: AdvProg - A**
 
+### 💲Software Architecture Payment Service💲
 
-### **💲Progress Milestone Payment Service💲**
+### Component Diagram Payment Management Service
+
+![Component Diagram Payment Management Service](./img/Component Diagram untuk Payment Management Service.png)
+
+**Aktor (Ungu)**
+
+- **Admin User**: Pengguna dengan hak akses admin yang dapat melakukan operasi CRUD pada payment method
+- **Regular User**: Pengguna biasa yang hanya dapat melihat payment method aktif
+- **Order Service**: Layanan eksternal yang menggunakan payment method untuk pemrosesan pesanan
+
+**Controller (Hijau)**
+- **Payment Method Controller**: Menangani semua HTTP request terkait payment method, dengan endpoint terpisah untuk admin dan pengguna biasa
+
+
+**Interface (Abu-abu)**
+- **PaymentMethodService**: Interface yang mendefinisikan kontrak untuk layanan payment method
+- **PaymentMethodRepository**: Interface untuk akses data payment method
+
+
+**Service (Hijau)**
+
+- **Payment Method Service Impl**: Implementasi dari interface PaymentMethodService yang berisi logika bisnis untuk pengelolaan payment method
+
+
+**Model (Hijau)**
+
+- **Payment Method**: Model dasar untuk semua jenis payment method
+- **Bank Transfer**: Model untuk payment method transfer bank
+- **COD**: Model untuk payment method tunai (Cash On Delivery)
+- **E-Wallet**: Model untuk payment method e-wallet
+
+
+**DTO (Kuning)**
+
+- **Payment Method Register DTO**: Data Transfer Object untuk registrasi payment method baru
+- **Payment Method DTO**: DTO dasar untuk respons payment method
+- **Bank Transfer DTO**, **COD DTO**, **E-Wallet DTO**: DTO spesifik untuk setiap jenis payment method
+
+
+**Database (Biru)**
+
+- **Payment Method Database**: Menyimpan data payment method dan konfigurasinya
+
+
+---
+
+### Code Diagram
+
+![Code Diagram](./img/Code Diagram.png)
+
+**Code Diagram 1: Inheritance Hierarchy Payment Method**
+
+Diagram ini menunjukkan hierarki inheritance untuk model payment method. `PaymentMethod` adalah class dasar yang memiliki properti umum seperti id, nama, dan deskripsi. Class turunan seperti `BankTransfer`, `COD`, dan `EWallet` memperluas class dasar dengan properti khusus untuk setiap jenis payment method.
+
+![Inheritance Hierarchy](./img/Diagram Kode 1 Inheritance Hierarchy Payment Method.png)
+
+**Code Diagram 2: DTO Pattern untuk Payment Method**
+
+Diagram ini menggambarkan pola Data Transfer Object (DTO) yang digunakan untuk pertukaran data antara lapisan dalam sistem. `PaymentMethodDTO` adalah class dasar untuk DTO, dengan class turunan seperti `BankTransferDTO`, `CodDTO`, dan `EWalletDTO` untuk jenis payment method spesifik. `PaymentMethodRegisterDTO` digunakan untuk menerima data dari klien saat membuat atau memperbarui payment method.
+
+![DTO Pattern](./img/Diagram Kode 2 DTO Pattern untuk Payment Method.png)
+
+**Code Diagram 3: Controller dan Service Interface**
+
+Diagram ini menunjukkan hubungan antara controller, service interface, service implementation, dan repository. `PaymentMethodController` menangani HTTP request dan memanggil `PaymentMethodService`. `PaymentMethodServiceImpl` mengimplementasikan interface `PaymentMethodService` dan menggunakan `PaymentMethodRepository` untuk akses data.
+
+![Controller and Service](./img/Diagram Kode 3 Controller dan Service Interface.png)
+
+**Code Diagram 4: Status Metode Pembayaran**
+
+Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE dan INACTIVE (soft delete). Dalam status ACTIVE, payment method dapat memiliki berbagai tipe (COD, BANK_TRANSFER, E_WALLET) dan dapat diperbarui oleh admin.
+
+![Payment Method Status](./img/Diagram Kode 4 Status Metode Pembayaran.png)
+
+
+---
+
+### 💲Progress Milestone Payment Service💲
 
 
 | Komponen                                                                                                     |
@@ -25,7 +103,7 @@
 
 📌 **Progress Milestone 25%**:
 
-> Pada milestone 25% ini, saya telah mengerjakan pondasi utama untuk fitur `PaymentMethod`, mencakup model, controller, service, DTO, repository, dan juga enum untuk tipe metode pembayaran. Selain itu, telah dilakukan integrasi dengan service Authentication untuk otorisasi berbasis JWT, serta penerapan role-based security pada endpoint menggunakan anotasi @PreAuthorize dan @PermitAll. 
+> Pada milestone 25% ini, saya telah mengerjakan pondasi utama untuk fitur `PaymentMethod`, mencakup model, controller, service, DTO, repository, dan juga enum untuk tipe payment method. Selain itu, telah dilakukan integrasi dengan service Authentication untuk otorisasi berbasis JWT, serta penerapan role-based security pada endpoint menggunakan anotasi @PreAuthorize dan @PermitAll. 
 > Dari sisi DevOps, pipeline CI/CD awal telah diterapkan menggunakan GitHub Actions untuk otomatisasi build dan deployment ke EC2. 
 
 ---
@@ -34,7 +112,7 @@
 
 **SOLID Principles ✅**
 - **Single Responsibility Principle (SRP)**: Kode yang dibuat sudah mengikuti prinsip ini, seperti controller yang hanya menangani request dan response, service yang menangani business logic, dan model yang merepresentasikan data.
-- **Open/Closed Principle (OCP)**: Sudah mengimplementasikan interface seperti `PaymentMethodService` yang memudahkan penambahan metode pembayaran baru tanpa mengubah kode yang ada.
+- **Open/Closed Principle (OCP)**: Sudah mengimplementasikan interface seperti `PaymentMethodService` yang memudahkan penambahan payment method baru tanpa mengubah kode yang ada.
 - **Liskov Substitution Principle (LSP)**: Penggunaan inheritance dengan `PaymentMethod` sebagai superclass dan `COD`, `BankTransfer`, dan `EWallet` sebagai subclass sudah sesuai dengan prinsip ini.
 - **Interface Segregation Principle (ISP)**: Interface yang digunakan sudah tersegmentasi, seperti `PaymentMethodService` yang hanya punya method yang relevan untuk class yang mengimplementasikannya.
 - **Dependency Inversion Principle (DIP)**: Menggunakan dependency injection melalui anotasi `@Autowired` yang memisahkan antara komponen tinggi (controller/service) dengan komponen rendah (repository).
