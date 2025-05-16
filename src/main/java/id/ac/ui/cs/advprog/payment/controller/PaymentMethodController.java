@@ -3,13 +3,11 @@ package id.ac.ui.cs.advprog.payment.controller;
 import id.ac.ui.cs.advprog.payment.constant.ErrorCode;
 import id.ac.ui.cs.advprog.payment.constant.Status;
 import id.ac.ui.cs.advprog.payment.dto.Response;
-import id.ac.ui.cs.advprog.payment.dto.paymentmethod.CustomPageResponse;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
@@ -17,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -90,27 +89,21 @@ public class PaymentMethodController {
         }
     }
 
+
     // View all Payment Methods (R) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public ResponseEntity<?> findAllPaymentMethods(
-            @RequestParam int page,
-            @RequestParam int size,
-            @RequestParam(required = false) Boolean isActive,
-            @RequestParam(required = false) String paymentMethod,
-            @RequestParam(required = false, defaultValue = "id") String sortBy,
-            @RequestParam(required = false, defaultValue = "ASC") String sortDirection
-    ) {
+    public ResponseEntity<?> findAllPaymentMethods() {
         try {
-            Page<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethod(page, size, isActive, paymentMethod, sortBy, sortDirection);
-            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(result);
-            Response response = new Response("success", "Payment methods retrieved successfully", customResponse);
+            List<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethods();
+            Response response = new Response("success", "Payment methods retrieved successfully", result);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println(e);
             return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // View Payment Method details by ID (R) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
@@ -145,26 +138,16 @@ public class PaymentMethodController {
     // View all Active Payment Methods (R) - Public (All Users)
     @PermitAll
     @GetMapping("/active")
-    public ResponseEntity<?> findAllActivePaymentMethods(
-            @RequestParam int page,
-            @RequestParam int size,
-            @RequestParam(required = false) String paymentMethod,
-            @RequestParam(required = false, defaultValue = "id") String sortBy,
-            @RequestParam(required = false, defaultValue = "ASC") String sortDirection
-    ) {
+    public ResponseEntity<?> findAllActivePaymentMethods() {
         try {
-            Page<PaymentMethodDTO> resultPage = paymentMethodService.findAllPaymentMethod(page, size, true, paymentMethod, sortBy, sortDirection);
-
-            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(resultPage);
-            Response response = new Response("success", "Payment methods retrieved successfully", customResponse);
+            List<PaymentMethodDTO> result = paymentMethodService.findAllActivePaymentMethods();
+            Response response = new Response("success", "Active payment methods retrieved successfully", result);
             return new ResponseEntity<>(response, HttpStatus.OK);
-
         } catch (Exception e) {
             System.err.println("Error retrieving active payment methods: " + e.getMessage());
             return new ResponseEntity<>(ErrorCode.GENERAL_ERROR.toErrorResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     // View Active Payment Method details (R) - Public (All Users)
     @PermitAll
     @GetMapping("/active/{id}")
@@ -187,18 +170,14 @@ public class PaymentMethodController {
         }
     }
 
+    // View Active Payment Methods by Type (R) - Public (All Users)
     @PermitAll
     @GetMapping("/type")
-    public ResponseEntity<?> getByType(@RequestParam("type") String type, @RequestParam int page, @RequestParam int size,
-                                       @RequestParam(required = false, defaultValue = "id") String sortBy,
-                                       @RequestParam(required = false, defaultValue = "ASC") String sortDirection
-    ) {
+    public ResponseEntity<?> getByType(@RequestParam("type") String type) {
         try {
-            // Pastikan Active
-            Page<PaymentMethodDTO> resultPage = paymentMethodService.findAllPaymentMethod(page, size, true, type, sortBy, sortDirection);
-            CustomPageResponse<PaymentMethodDTO> customResponse = new CustomPageResponse<>(resultPage);
-            Response response = new Response("success", "Active payment methods by type retrieved successfully", customResponse);
-            return ResponseEntity.ok(response);
+            List<PaymentMethodDTO> result = paymentMethodService.findByType(type);
+            Response response = new Response("success", "Payment methods by type retrieved successfully", result);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             System.err.println("Error retrieving payment methods by type: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
@@ -207,7 +186,6 @@ public class PaymentMethodController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     // For testing (no security, public)
     @PermitAll
