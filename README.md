@@ -8,7 +8,7 @@
 
 ### Component Diagram Payment Management Service
 
-![Component Diagram Payment Management Service](./img/Component Diagram untuk Payment Management Service.png)
+![Component Diagram Payment Management Service](img/Component_Diagram_untuk_Payment_Management_Service.png)
 
 **Aktor (Ungu)**
 
@@ -54,31 +54,31 @@
 
 ### Code Diagram
 
-![Code Diagram](./img/Code Diagram.png)
+![Code Diagram](./img/Code_Diagram.png)
 
 **Code Diagram 1: Inheritance Hierarchy Payment Method**
 
 Diagram ini menunjukkan hierarki inheritance untuk model payment method. `PaymentMethod` adalah class dasar yang memiliki properti umum seperti id, nama, dan deskripsi. Class turunan seperti `BankTransfer`, `COD`, dan `EWallet` memperluas class dasar dengan properti khusus untuk setiap jenis payment method.
 
-![Inheritance Hierarchy](./img/Diagram Kode 1 Inheritance Hierarchy Payment Method.png)
+![Inheritance Hierarchy](./img/Diagram_Kode_1_Inheritance_Hierarchy_Payment_Method.png)
 
 **Code Diagram 2: DTO Pattern untuk Payment Method**
 
 Diagram ini menggambarkan pola Data Transfer Object (DTO) yang digunakan untuk pertukaran data antara lapisan dalam sistem. `PaymentMethodDTO` adalah class dasar untuk DTO, dengan class turunan seperti `BankTransferDTO`, `CodDTO`, dan `EWalletDTO` untuk jenis payment method spesifik. `PaymentMethodRegisterDTO` digunakan untuk menerima data dari klien saat membuat atau memperbarui payment method.
 
-![DTO Pattern](./img/Diagram Kode 2 DTO Pattern untuk Payment Method.png)
+![DTO Pattern](./img/Diagram_Kode_2_DTO_Pattern_untuk_Payment_Method.png)
 
 **Code Diagram 3: Controller dan Service Interface**
 
 Diagram ini menunjukkan hubungan antara controller, service interface, service implementation, dan repository. `PaymentMethodController` menangani HTTP request dan memanggil `PaymentMethodService`. `PaymentMethodServiceImpl` mengimplementasikan interface `PaymentMethodService` dan menggunakan `PaymentMethodRepository` untuk akses data.
 
-![Controller and Service](./img/Diagram Kode 3 Controller dan Service Interface.png)
+![Controller and Service](./img/Diagram_Kode_3_Controller_dan_Service_Interface.png)
 
 **Code Diagram 4: Status Metode Pembayaran**
 
 Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE dan INACTIVE (soft delete). Dalam status ACTIVE, payment method dapat memiliki berbagai tipe (COD, BANK_TRANSFER, E_WALLET) dan dapat diperbarui oleh admin.
 
-![Payment Method Status](./img/Diagram Kode 4 Status Metode Pembayaran.png)
+![Payment Method Status](./img/Diagram_Kode_4_Status_Metode_Pembayaran.png)
 
 
 ---
