@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.payment.constant;
+package id.ac.ui.cs.advprog.payment.enums;
 
 import id.ac.ui.cs.advprog.payment.dto.exception.ErrorResponse;
 import org.springframework.http.HttpStatus;

@@ -6,6 +6,7 @@ import lombok.Generated;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.UUID;
 
 @Generated
@@ -20,10 +21,10 @@ public class PaymentMethodDTO {
     private UUID createdBy;
 
     @JsonProperty("created_at")
-    private Timestamp createdAt;
+    private Date createdAt;
 
     @JsonProperty("updated_at")
-    private Timestamp updatedAt;
+    private Date updatedAt;
 
     @JsonProperty("deleted_at")
     private Timestamp deletedAt;

@@ -4,9 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "e_wallet")
@@ -14,18 +12,25 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Getter
+@Setter
 public class EWallet extends PaymentMethod {
 
-    @Column(name = "account_name", nullable = false, length = 100)
+    @Column(name = "account_name", nullable = false)
     private String accountName;
 
-    @Column(name = "virtual_account_number", nullable = false, length = 50)
+    @Column(name = "virtual_account_number", nullable = false)
     private String virtualAccountNumber;
 
     @Column(name = "instructions", columnDefinition = "TEXT")
     private String instructions;
 
     public EWallet(PaymentMethod paymentMethod) {
-        super();
+        super(
+                paymentMethod.getName(),
+                paymentMethod.getDescription(),
+                paymentMethod.getProcessingFee(),
+                paymentMethod.getCreatedBy()
+        );
     }
 }
