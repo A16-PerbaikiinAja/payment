@@ -23,23 +23,33 @@ public class PaymentMethodRegisterDTO {
             regexp = "COD|BANK_TRANSFER|E_WALLET",
             message = "Payment method type must be one of: COD, BANK_TRANSFER, E_WALLET"
     )
+    @JsonProperty("payment_method")
+    private String paymentMethod;
+
+    @JsonProperty("description")
     private String description;
 
-    @NotBlank(message = "processingFee must not be blank")
+    @JsonProperty("processing_fee")
     @NotNull(message = "processingFee must not be null")
     private BigDecimal processingFee;
 
     @NotBlank(message = "CreatedBy must not be blank")
     @NotNull(message = "CreatedBy must not be null")
+
     @JsonProperty("created_by")
     private String createdBy;
 
-    private String paymentMethod;
+    @JsonProperty("account_name")
     private String accountName;
+    @JsonProperty("account_number")
     private String accountNumber;
+    @JsonProperty("bank_name")
     private String bankName;
+    @JsonProperty("virtual_account_number")
     private String virtualAccountNumber;
+    @JsonProperty("phone_number")
     private String phoneNumber;
+    @JsonProperty("instructions")
     private String instructions;
-    private String status;
+
 }

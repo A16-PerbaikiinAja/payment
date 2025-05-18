@@ -10,5 +10,6 @@ import java.util.UUID;
 
 @Repository
 public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UUID>, JpaSpecificationExecutor<PaymentMethod> {
-    List<PaymentMethod> findByDeletedAtNotNull();
+    List<PaymentMethod> findByDeletedAtNull();
+
 }

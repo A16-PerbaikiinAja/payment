@@ -4,6 +4,20 @@
 
 **Kelas: AdvProg - A**
 
+---
+
+### 💲Software Architecture Payment Management Service - Updated💲
+
+### Component Diagram untuk Payment Management Service - Updated
+
+![Update Component Diagram Payment Management Service](img/Update_Component_Diagram_untuk_Payment_Management_Service.png)
+
+### Code Diagram untuk Payment Management Service - Updated
+
+![Code Diagram](./img/Update_Code_Diagram.png)
+
+---
+
 ### 💲Software Architecture Payment Service💲
 
 ### Component Diagram Payment Management Service
