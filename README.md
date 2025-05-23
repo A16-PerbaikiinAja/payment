@@ -170,14 +170,14 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 
 #### 3. **Software Architecture 🏗️**
 
-**Architecture**
-- **Modular**: Sudah mengadopsi arsitektur yang terpisah dengan controller, service, dan repository. Ini membuat aplikasi lebih mudah dikelola dan dikembangkan.
+**Architecture 🏗️**
+- Sudah mengadopsi arsitektur yang terpisah dengan controller, service, dan repository (**modularity**). Ini membuat aplikasi lebih mudah dikelola dan dikembangkan.
 
-**Concurrency (TBA)**
-- Belum ada implementasi untuk mengelola concurrency. 
+**Concurrency 🔀**
+- Implementasi concurrency dasar telah diterapkan pada service pengambilan detail payment method. Penggunaan `ExecutorService` bersama `CompletableFuture` memungkinkan pemrosesan I/O-bound task (seperti panggilan ke service lain) secara asynchronous, memanfaatkan thread pool untuk efisiensi.
 
-**Asynchronous (TBA)**
-- Belum ada implementasi untuk mengelola asynchronous.
+**Asynchronous ⏳**
+- Aplikasi memanfaatkan `CompletableFuture` untuk operasi asinkron. Khususnya pada fitur untuk menampilkan detail payment method beserta jumlah order yang terkait, request ke Order Service untuk mengambil data order dilakukan secara asinkron. Ini bertujuan untuk meningkatkan responsivitas API dengan tidak memblokir thread utama saat menunggu operasi eksternal yang memakan waktu.
 
 **High-Level Networking 🌐**
 

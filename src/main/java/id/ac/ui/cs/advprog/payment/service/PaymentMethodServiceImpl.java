@@ -1,7 +1,9 @@
 package id.ac.ui.cs.advprog.payment.service;
 
+import id.ac.ui.cs.advprog.payment.external.OrderData;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
 import id.ac.ui.cs.advprog.payment.enums.PaymentMethodType;
+import id.ac.ui.cs.advprog.payment.external.OrderServiceClient;
 import id.ac.ui.cs.advprog.payment.model.BankTransfer;
 import id.ac.ui.cs.advprog.payment.model.COD;
 import id.ac.ui.cs.advprog.payment.model.EWallet;
@@ -20,6 +22,10 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +33,9 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
     @Autowired
     private PaymentMethodRepository paymentMethodRepository;
+
+    private final OrderServiceClient orderServiceClient;
+    private final ExecutorService customExecutor = Executors.newFixedThreadPool(10);
 
     @Autowired
     private final CODRepository codRepository;
@@ -308,6 +317,58 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
         dto.setProcessingFee(method.getProcessingFee());
 
         return dto;
+    }
+
+
+    @Override
+    public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts() {
+        List<PaymentMethod> localPaymentMethods = paymentMethodRepository.findAll();
+
+        CompletableFuture<List<OrderData>> allOrdersFuture = CompletableFuture.supplyAsync(
+                orderServiceClient::getAllOrders,
+                customExecutor
+        ).exceptionally(ex -> {
+            System.err.println("ERROR: Gagal mengambil data list order dari Order Service: " + ex.getMessage());
+            return Collections.emptyList();
+        });
+
+        return allOrdersFuture.thenApplyAsync(allFetchedOrders -> {
+            Map<String, Long> countsByPaymentMethodId = allFetchedOrders.stream()
+                    .filter(orderData -> orderData.getPaymentMethodId() != null)
+                    .collect(Collectors.groupingBy(
+                            orderData -> orderData.getPaymentMethodId().toString(),
+                            Collectors.counting()
+                    ));
+
+            return localPaymentMethods.stream().map(method -> {
+                PaymentMethodDetailsDTO dto = new PaymentMethodDetailsDTO();
+                String currentMethodId = method.getId().toString();
+
+                dto.setId(currentMethodId);
+                dto.setName(method.getName());
+                dto.setMethodType(determinePaymentMethodTypeString(method));
+
+                if (method instanceof COD) {
+                    dto.setInstructions(((COD) method).getInstructions());
+                } else if (method instanceof EWallet) {
+                    dto.setInstructions(((EWallet) method).getInstructions());
+                }
+
+                dto.setOrderCount(countsByPaymentMethodId.getOrDefault(currentMethodId, 0L).intValue());
+                return dto;
+            }).collect(Collectors.toList());
+        }, customExecutor).join();
+    }
+
+    private String determinePaymentMethodTypeString(PaymentMethod method) {
+        if (method instanceof COD) {
+            return PaymentMethodType.COD.toString();
+        } else if (method instanceof BankTransfer) {
+            return PaymentMethodType.BANK_TRANSFER.toString();
+        } else if (method instanceof EWallet) {
+            return PaymentMethodType.E_WALLET.toString();
+        }
+        throw new IllegalArgumentException("Unknown PaymentMethod subclass: " + method.getClass().getName());
     }
 
 }

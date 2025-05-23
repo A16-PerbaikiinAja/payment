@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.payment.service;
 
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDetailsDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodUserDTO;
 
@@ -24,5 +25,8 @@ public interface PaymentMethodService {
     List<PaymentMethodUserDTO> findAllActivePaymentMethods();
     PaymentMethodUserDTO findActivePaymentMethodById(String id);
     List<PaymentMethodUserDTO> findActivePaymentMethodsByType(String type);
+
+    //Asynchronous with Order Service
+    List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts();
 
 }

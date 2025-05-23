@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.payment.controller;
 
+import id.ac.ui.cs.advprog.payment.dto.exception.ErrorResponse;
+import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDetailsDTO;
 import id.ac.ui.cs.advprog.payment.enums.ErrorCode;
 import id.ac.ui.cs.advprog.payment.enums.Status;
 import id.ac.ui.cs.advprog.payment.dto.Response;
@@ -81,17 +83,31 @@ public class PaymentMethodController {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (IllegalArgumentException e) {
-            Response response = new Response(Status.error.toString(), e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Bad Request", // atau HttpStatus.BAD_REQUEST.getReasonPhrase()
+                    e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
 
-        } catch (EntityNotFoundException e) {
-            Response response = new Response(Status.error.toString(), e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (EntityNotFoundException e) { // Jika EntityNotFoundException dilempar dari service
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.NOT_FOUND.value(),
+                    "Not Found", // atau HttpStatus.NOT_FOUND.getReasonPhrase()
+                    e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
 
-        } catch (Exception e) {
-            Response response = new Response(Status.error.toString(), "Internal Server Error", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) { // Catch-all untuk error tak terduga lainnya
+            // e.printStackTrace(); // Penting untuk logging di server-side saat development
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                    "An unexpected error occurred: " + e.getMessage() // Berikan pesan yang lebih umum jika e.getMessage() terlalu teknis
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
     }
 
     // View all Payment Methods (R) - Admin Only
@@ -138,7 +154,7 @@ public class PaymentMethodController {
         return ResponseEntity.ok(response);
     }
 
-    // Activate Payment Method (U) - Admin Only
+    // Reactivate Payment Method (U) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/admin/{id}/activate")
     public ResponseEntity<?> activatePaymentMethod(@PathVariable String id) {
@@ -146,8 +162,6 @@ public class PaymentMethodController {
         Response response = new Response("success", "Payment method reactivate successfully", result);
         return ResponseEntity.ok(response);
     }
-
-//    =================
 
     // View Payment Method details by ID (R) - Admin Only
     @PreAuthorize("hasRole('ADMIN')")
@@ -168,6 +182,33 @@ public class PaymentMethodController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+     // View All Payment Methods with their order counts (R) - ADMIN ONLY
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/details-with-counts")
+    public ResponseEntity<?> getAllPaymentMethodsWithOrderDetailsForAdmin() {
+        try {
+            List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts();
+            Response successResponse = new Response(
+                    Status.success.toString(),
+                    "All payment methods with order counts retrieved successfully for admin",
+                    result
+            );
+            return new ResponseEntity<>(successResponse, HttpStatus.OK);
+
+        } catch (Exception e) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                    "Failed to retrieve payment methods with order counts for admin: " + e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    //    =================
+
 
     // View Active Payment Methods (R) - Public (All Users)
     @PermitAll
@@ -233,5 +274,24 @@ public class PaymentMethodController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+//     // View All Active Payment Methods with their order counts (R) - Public (All Users)
+//    @PermitAll
+//    @GetMapping("/active/details-with-counts")
+//    public ResponseEntity<?> getAllPaymentMethodsWithOrderDetails() {
+//        try {
+//            List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts();
+//            Response successResponse = new Response(Status.success.toString(), "Active payment methods with order counts retrieved successfully", result);
+//            return new ResponseEntity<>(successResponse, HttpStatus.OK);
+//        } catch (Exception e) {
+//            ErrorResponse errorResponse = new ErrorResponse(
+//                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+//                    "Failed to retrieve payment methods with order counts: " + e.getMessage()
+//            );
+//            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+//
 
 }
