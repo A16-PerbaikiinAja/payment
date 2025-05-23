@@ -50,6 +50,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito:mockito-junit-jupiter")
     testImplementation("org.springframework.security:spring-security-test")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     // DARI REPO AUTHENTICATION
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
