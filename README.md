@@ -163,8 +163,20 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 - **Mocking**: Sudah menggunakan mocking (`Mockito`) untuk memastikan bahwa unit tests tidak bergantung pada implementasi yang lebih besar, seperti database.
 - **Test Coverage**: Masih bisa ditambahkan lebih banyak jalur yang mungkin (misalnya validasi input yang salah, kesalahan autentikasi) dan memastikan kode bisa diubah tanpa merusak fungsionalitas yang ada.
 
-**Profiling (TBA)**:
-- Belum ada, saya akan menggunakan tools seperti **JProfiler** untuk memantau performa.
+**Profiling**:
+
+Pada tahap profiling, saya menggunakan fitur IntelliJ Profiler untuk menganalisis performa aplikasi PaymentApplication. Profiling dilakukan dengan menjalankan aplikasi dalam mode profiler di IntelliJ sehingga dapat merekam aktivitas CPU, memori, serta panggilan metode secara detail selama aplikasi berjalan.
+Profiling menghasilkan visualisasi seperti Flame Graph yang menunjukkan waktu CPU yang digunakan oleh setiap metode, sehingga dapat diidentifikasi bagian-bagian kode yang paling berat atau sering dipanggil. Dari hasil profiling ini, terlihat bahwa metode utama yang menjalankan logika bisnis aplikasi mendapat alokasi waktu CPU yang signifikan, namun terdapat beberapa metode library dan framework yang juga memberikan beban pemrosesan.
+
+- Fokus pada metode dalam package aplikasi yang paling banyak menggunakan CPU. Refaktor atau optimasi algoritma untuk mengurangi beban CPU.
+
+- Jika ditemukan metode dari framework yang menjadi bottleneck, pertimbangkan konfigurasi ulang atau gunakan caching untuk mengurangi pemanggilan berulang.
+
+- Perhatikan penggunaan thread dan blocking calls yang dapat menyebabkan bottleneck, optimasi dengan asynchronous processing jika memungkinkan.
+
+- Integrasikan dengan monitoring runtime (misalnya Prometheus + Grafana) untuk melihat performa dalam kondisi beban nyata dan menemukan potensi bottleneck lainnya.
+
+![PROFILING](img/profiling.png)
 
 ---
 
@@ -202,10 +214,16 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 **Containerization 🐳**
 - Menggunakan **Docker** untuk membangun image dan meng-deploy aplikasi ke EC2. Docker memastikan aplikasi berjalan konsisten di berbagai environment (dev, staging, production).
 
-**Monitoring (TBA)**
-- Belum ada implementasi untuk mengelola monitoring.
+**Monitoring**
 
-**Infrastructure as Code (IaC) (TBA)**
-- Belum ada implementasi untuk mengelola IaC.
+- Spring Boot Actuator memudahkan expose berbagai metrik penting aplikasi (seperti HTTP request, memory JVM, CPU usage) secara langsung tanpa perlu banyak konfigurasi manual.
+
+- Prometheus sebagai time-series database yang handal untuk mengumpulkan dan menyimpan metrik secara efisien.
+
+- Grafana menyediakan visualisasi interaktif dan dashboard realtime yang mudah dikustomisasi, sehingga memudahkan pemantauan performa aplikasi secara komprehensif.
+
+- Prometheus meng-scrape endpoint /actuator/prometheus secara berkala setiap 3 detik (dikonfigurasi di prometheus.yml).
+
+- Grafana membaca data dari Prometheus datasource dan menampilkan metrik seperti JVM memory usage, CPU load, HTTP request rates dalam bentuk grafik dan panel interaktif.
 
 ---

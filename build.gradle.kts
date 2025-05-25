@@ -51,6 +51,12 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter")
     testImplementation("org.springframework.security:spring-security-test")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-core")
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     // DARI REPO AUTHENTICATION
     implementation("io.github.cdimascio:java-dotenv:5.2.2")

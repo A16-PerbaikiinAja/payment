@@ -1,7 +1,10 @@
 package id.ac.ui.cs.advprog.payment.external;
 
+import id.ac.ui.cs.advprog.payment.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -9,14 +12,18 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.stereotype.Service;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
-@Component
+@Service
 public class OrderServiceClient {
 
     private final RestTemplate restTemplate;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${order.service.baseurl}")
     private String orderServiceBaseUrl;
@@ -24,21 +31,41 @@ public class OrderServiceClient {
     @Value("${order.service.endpoint.all-orders}")
     private String allOrdersEndpoint;
 
-    public OrderServiceClient(RestTemplate restTemplate) {
+    // Modifikasi constructor untuk menerima JwtTokenProvider
+    public OrderServiceClient(RestTemplate restTemplate, JwtTokenProvider jwtTokenProvider) {
         this.restTemplate = restTemplate;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    public List<OrderData> getAllOrders() {
+    private String generateServiceToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+            return token;
+        }
+        return null;
+    }
+
+    public List<OrderData> getAllOrders(HttpServletRequest request) {
         System.out.println("Memanggil Order Service untuk mengambil semua order (Thread: " +
                 Thread.currentThread().getName() + ")");
 
         String finalAllOrdersUrl = orderServiceBaseUrl + allOrdersEndpoint;
+        String generatedToken = generateServiceToken(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        if (generatedToken != null && !generatedToken.isEmpty()) {
+            headers.set("Authorization", "Bearer " + generatedToken);
+        }
+        System.out.println(generatedToken);
+
+        HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
 
         try {
             ResponseEntity<OrderListResponseFromExternal> responseEntity = restTemplate.exchange(
                     finalAllOrdersUrl,
                     HttpMethod.GET,
-                    null,
+                    entity,
                     new ParameterizedTypeReference<OrderListResponseFromExternal>() {}
             );
 
@@ -48,7 +75,7 @@ public class OrderServiceClient {
                 System.out.println("Berhasil mengambil semua order. Jumlah: " + listResponse.getCount());
                 return listResponse.getOrders();
             } else {
-                System.out.println("Mendapat respons, tapi tidak ada list order di dalamnya.");
+                System.out.println("Mendapat respons valid, tapi tidak ada list order di dalamnya atau format tidak sesuai.");
                 return Collections.emptyList();
             }
 

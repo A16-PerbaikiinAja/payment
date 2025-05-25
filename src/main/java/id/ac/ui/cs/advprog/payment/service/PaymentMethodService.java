@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDetailsDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodUserDTO;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,6 @@ public interface PaymentMethodService {
     List<PaymentMethodUserDTO> findActivePaymentMethodsByType(String type);
 
     //Asynchronous with Order Service
-    List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts();
+    List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request);
 
 }

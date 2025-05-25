@@ -9,7 +9,6 @@ import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodRegisterDTO;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.PaymentMethodUserDTO;
 import id.ac.ui.cs.advprog.payment.service.PaymentMethodService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +16,7 @@ import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.List;
@@ -90,20 +90,11 @@ public class PaymentMethodController {
             );
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
 
-        } catch (EntityNotFoundException e) { // Jika EntityNotFoundException dilempar dari service
-            ErrorResponse errorResponse = new ErrorResponse(
-                    HttpStatus.NOT_FOUND.value(),
-                    "Not Found", // atau HttpStatus.NOT_FOUND.getReasonPhrase()
-                    e.getMessage()
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-
-        } catch (Exception e) { // Catch-all untuk error tak terduga lainnya
-            // e.printStackTrace(); // Penting untuk logging di server-side saat development
+        } catch (Exception e) {
             ErrorResponse errorResponse = new ErrorResponse(
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                    "An unexpected error occurred: " + e.getMessage() // Berikan pesan yang lebih umum jika e.getMessage() terlalu teknis
+                    "An unexpected error occurred: " + e.getMessage()
             );
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -133,9 +124,6 @@ public class PaymentMethodController {
         try {
             PaymentMethodDTO updated = paymentMethodService.updatePaymentMethod(id, dto);
             return ResponseEntity.ok(new Response("success", "Payment method updated successfully", updated));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new Response("error", e.getMessage(), null));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new Response("error", e.getMessage(), null));
@@ -186,9 +174,9 @@ public class PaymentMethodController {
      // View All Payment Methods with their order counts (R) - ADMIN ONLY
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/details-with-counts")
-    public ResponseEntity<?> getAllPaymentMethodsWithOrderDetailsForAdmin() {
+    public ResponseEntity<?> getAllPaymentMethodsWithOrderDetailsForAdmin(HttpServletRequest request) {
         try {
-            List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts();
+            List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
             Response successResponse = new Response(
                     Status.success.toString(),
                     "All payment methods with order counts retrieved successfully for admin",
@@ -275,23 +263,5 @@ public class PaymentMethodController {
         }
     }
 
-//     // View All Active Payment Methods with their order counts (R) - Public (All Users)
-//    @PermitAll
-//    @GetMapping("/active/details-with-counts")
-//    public ResponseEntity<?> getAllPaymentMethodsWithOrderDetails() {
-//        try {
-//            List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts();
-//            Response successResponse = new Response(Status.success.toString(), "Active payment methods with order counts retrieved successfully", result);
-//            return new ResponseEntity<>(successResponse, HttpStatus.OK);
-//        } catch (Exception e) {
-//            ErrorResponse errorResponse = new ErrorResponse(
-//                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-//                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-//                    "Failed to retrieve payment methods with order counts: " + e.getMessage()
-//            );
-//            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
 
 }
