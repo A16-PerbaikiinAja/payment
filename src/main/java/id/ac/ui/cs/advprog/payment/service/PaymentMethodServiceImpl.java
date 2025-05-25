@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -321,18 +322,22 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
 
     @Override
-    public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts() {
+    public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request) {
         List<PaymentMethod> localPaymentMethods = paymentMethodRepository.findAll();
 
         CompletableFuture<List<OrderData>> allOrdersFuture = CompletableFuture.supplyAsync(
-                orderServiceClient::getAllOrders,
+                () -> {
+                    System.out.println("Memulai panggilan async ke OrderServiceClient.getAllOrders() (Thread: " + Thread.currentThread().getName() + ")");
+                    return orderServiceClient.getAllOrders(request);
+                },
                 customExecutor
         ).exceptionally(ex -> {
-            System.err.println("ERROR: Gagal mengambil data list order dari Order Service: " + ex.getMessage());
+            System.err.println("ERROR SERVICEIMPL: Gagal mengambil data list order dari Order Service: " + ex.getMessage());
             return Collections.emptyList();
         });
 
         return allOrdersFuture.thenApplyAsync(allFetchedOrders -> {
+            System.out.println("Memulai pemrosesan data order yang diterima di ServiceImpl (Thread: " + Thread.currentThread().getName() + ")");
             Map<String, Long> countsByPaymentMethodId = allFetchedOrders.stream()
                     .filter(orderData -> orderData.getPaymentMethodId() != null)
                     .collect(Collectors.groupingBy(
@@ -340,7 +345,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                             Collectors.counting()
                     ));
 
-            return localPaymentMethods.stream().map(method -> {
+            List<PaymentMethodDetailsDTO> resultDetails = localPaymentMethods.stream().map(method -> {
                 PaymentMethodDetailsDTO dto = new PaymentMethodDetailsDTO();
                 String currentMethodId = method.getId().toString();
 
@@ -357,8 +362,12 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 dto.setOrderCount(countsByPaymentMethodId.getOrDefault(currentMethodId, 0L).intValue());
                 return dto;
             }).collect(Collectors.toList());
+
+            System.out.println("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
+            return resultDetails;
         }, customExecutor).join();
     }
+
 
     private String determinePaymentMethodTypeString(PaymentMethod method) {
         if (method instanceof COD) {
