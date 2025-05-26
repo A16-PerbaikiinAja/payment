@@ -33,8 +33,8 @@ public class PaymentMethodRegisterDTO {
     @NotNull(message = "processingFee must not be null")
     private BigDecimal processingFee;
 
-    @NotBlank(message = "CreatedBy must not be blank")
-    @NotNull(message = "CreatedBy must not be null")
+//    @NotBlank(message = "CreatedBy must not be blank")
+//    @NotNull(message = "CreatedBy must not be null")
 
     @JsonProperty("created_by")
     private String createdBy;

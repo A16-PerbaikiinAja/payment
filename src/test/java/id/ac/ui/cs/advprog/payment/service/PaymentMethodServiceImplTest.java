@@ -1,12 +1,10 @@
 package id.ac.ui.cs.advprog.payment.service;
 
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
-import id.ac.ui.cs.advprog.payment.external.OrderData;
 import id.ac.ui.cs.advprog.payment.external.OrderServiceClient;
 import id.ac.ui.cs.advprog.payment.model.*;
 import id.ac.ui.cs.advprog.payment.repository.*;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -471,4 +469,6 @@ class PaymentMethodServiceImplTest {
 
 
     }
+
+
 }

@@ -194,6 +194,22 @@ public class PaymentMethodController {
         }
     }
 
+    // View Payment Methods by Type (R) - Admin Only
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/type")
+    public ResponseEntity<?> getByTypeForAdmin(@RequestParam("type") String type) {
+        try {
+            List<PaymentMethodDTO> result = paymentMethodService.findByTypeForAdmin(type);
+            Response response = new Response("success", "Payment methods by type retrieved successfully", result);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("code", "500");
+            errorResponse.put("message", "Internal Server Error");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     //    =================
 
@@ -242,22 +258,6 @@ public class PaymentMethodController {
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("code", "5000");
-            errorResponse.put("message", "Internal Server Error");
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // View Payment Methods by Type (R) - Admin Only
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/type")
-    public ResponseEntity<?> getByTypeForAdmin(@RequestParam("type") String type) {
-        try {
-            List<PaymentMethodDTO> result = paymentMethodService.findByTypeForAdmin(type);
-            Response response = new Response("success", "Payment methods by type retrieved successfully", result);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("code", "500");
             errorResponse.put("message", "Internal Server Error");
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -48,7 +48,7 @@ public class PaymentMethod {
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt;
 
-    @Column(name = "created_by", nullable = false)
+    @Column(name = "created_by")
     private UUID createdBy;
 
     public PaymentMethod(String name, String description, BigDecimal processingFee, UUID createdBy) {
