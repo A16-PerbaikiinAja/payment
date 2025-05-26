@@ -25,7 +25,7 @@ public class OrderServiceClient {
     private final RestTemplate restTemplate;
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Value("${order.service.baseurl}")
+    @Value("${order.service.baseurl:}")
     private String orderServiceBaseUrl;
 
     @Value("${order.service.endpoint.all-orders}")
@@ -57,7 +57,6 @@ public class OrderServiceClient {
         if (generatedToken != null && !generatedToken.isEmpty()) {
             headers.set("Authorization", "Bearer " + generatedToken);
         }
-        System.out.println(generatedToken);
 
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
 

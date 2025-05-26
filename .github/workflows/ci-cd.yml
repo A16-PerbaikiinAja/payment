@@ -114,6 +114,7 @@ jobs:
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
+            ORDER_SERVICE_URL_FROM_ENV=${{ secrets.ORDER_SERVICE_URL }}
             EOF
 
             # Check if the .env file is created correctly

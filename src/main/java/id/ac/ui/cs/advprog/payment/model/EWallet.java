@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Digits;
 import lombok.*;
 
 @Entity
@@ -19,6 +20,7 @@ public class EWallet extends PaymentMethod {
     @Column(name = "account_name", nullable = false)
     private String accountName;
 
+    @Digits(integer = 20, fraction = 0, message = "Virtual Account Number harus berupa angka tanpa desimal")
     @Column(name = "virtual_account_number", nullable = false)
     private String virtualAccountNumber;
 
