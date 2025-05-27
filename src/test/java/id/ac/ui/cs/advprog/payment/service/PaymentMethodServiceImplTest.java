@@ -1,11 +1,15 @@
 package id.ac.ui.cs.advprog.payment.service;
 
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
+import id.ac.ui.cs.advprog.payment.enums.PaymentMethodType;
+import id.ac.ui.cs.advprog.payment.external.OrderData;
 import id.ac.ui.cs.advprog.payment.external.OrderServiceClient;
 import id.ac.ui.cs.advprog.payment.model.*;
 import id.ac.ui.cs.advprog.payment.repository.*;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -13,12 +17,15 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -34,6 +41,13 @@ class PaymentMethodServiceImplTest {
     private Authentication authentication;
     private SecurityContext securityContext;
     private ExecutorService mockExecutor;
+    private HttpServletRequest request;
+
+    private List<PaymentMethod> mockPaymentMethods;
+    private List<OrderData> mockOrderData;
+    private UUID paymentMethodId1;
+    private UUID paymentMethodId2;
+    private UUID paymentMethodId3;
 
     private final UUID USER_ID = UUID.randomUUID();
     private final UUID PAYMENT_METHOD_ID = UUID.randomUUID();
@@ -49,6 +63,7 @@ class PaymentMethodServiceImplTest {
         authentication = mock(Authentication.class);
         securityContext = mock(SecurityContext.class);
         mockExecutor = mock(ExecutorService.class);
+        request = mock(HttpServletRequest.class);
 
         // Create service instance
         paymentMethodService = new PaymentMethodServiceImpl(orderServiceClient, codRepository, bankTransferRepository, eWalletRepository);
@@ -62,6 +77,60 @@ class PaymentMethodServiceImplTest {
         SecurityContextHolder.setContext(securityContext);
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getPrincipal()).thenReturn(USER_ID.toString());
+
+        paymentMethodId1 = UUID.randomUUID();
+        paymentMethodId2 = UUID.randomUUID();
+        paymentMethodId3 = UUID.randomUUID();
+
+        // Setup mock payment methods
+        COD codMethod = new COD();
+        codMethod.setId(paymentMethodId1);
+        codMethod.setName("Cash on Delivery");
+        codMethod.setInstructions("Pay when the order arrives");
+
+        BankTransfer bankTransferMethod = new BankTransfer();
+        bankTransferMethod.setId(paymentMethodId2);
+        bankTransferMethod.setName("Bank Transfer");
+
+        EWallet eWalletMethod = new EWallet();
+        eWalletMethod.setId(paymentMethodId3);
+        eWalletMethod.setName("E-Wallet Payment");
+        eWalletMethod.setInstructions("Use mobile app to pay");
+
+    }
+
+    private void setupMockData() {
+        // Setup mock payment methods
+        COD codMethod = new COD();
+        codMethod.setId(paymentMethodId1);
+        codMethod.setName("Cash on Delivery");
+        codMethod.setInstructions("Pay when the order arrives");
+
+        BankTransfer bankTransferMethod = new BankTransfer();
+        bankTransferMethod.setId(paymentMethodId2);
+        bankTransferMethod.setName("Bank Transfer");
+
+        EWallet eWalletMethod = new EWallet();
+        eWalletMethod.setId(paymentMethodId3);
+        eWalletMethod.setName("E-Wallet Payment");
+        eWalletMethod.setInstructions("Use mobile app to pay");
+
+        mockPaymentMethods = Arrays.asList(codMethod, bankTransferMethod, eWalletMethod);
+
+        // Setup mock order data
+        OrderData order1 = new OrderData();
+        order1.setPaymentMethodId(paymentMethodId1);
+
+        OrderData order2 = new OrderData();
+        order2.setPaymentMethodId(paymentMethodId1);
+
+        OrderData order3 = new OrderData();
+        order3.setPaymentMethodId(paymentMethodId2);
+
+        OrderData order4 = new OrderData();
+        order4.setPaymentMethodId(null); // Order without payment method
+
+        mockOrderData = Arrays.asList(order1, order2, order3, order4);
     }
 
     @Nested
@@ -470,5 +539,298 @@ class PaymentMethodServiceImplTest {
 
     }
 
+
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Success with all payment method types and order counts")
+//    void testGetAllPaymentMethodsWithOrderCounts_Success() {
+//        // Arrange
+//        setupMockData();
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(mockOrderData);
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert
+//        assertThat(result).hasSize(3);
+//
+//        // Verify COD payment method
+//        PaymentMethodDetailsDTO codDto = result.stream()
+//                .filter(dto -> dto.getId().equals(paymentMethodId1.toString()))
+//                .findFirst()
+//                .orElseThrow();
+//
+//        assertThat(codDto.getName()).isEqualTo("Cash on Delivery");
+//        assertThat(codDto.getMethodType()).isEqualTo("COD");
+//        assertThat(codDto.getInstructions()).isEqualTo("Pay when the order arrives");
+//        assertThat(codDto.getOrderCount()).isEqualTo(2); // 2 orders use COD
+//
+//        // Verify Bank Transfer payment method
+//        PaymentMethodDetailsDTO bankTransferDto = result.stream()
+//                .filter(dto -> dto.getId().equals(paymentMethodId2.toString()))
+//                .findFirst()
+//                .orElseThrow();
+//
+//        assertThat(bankTransferDto.getName()).isEqualTo("Bank Transfer");
+//        assertThat(bankTransferDto.getMethodType()).isEqualTo("BANK_TRANSFER");
+//        assertThat(bankTransferDto.getInstructions()).isNull(); // Bank transfer has no instructions
+//        assertThat(bankTransferDto.getOrderCount()).isEqualTo(1); // 1 order uses Bank Transfer
+//
+//        // Verify E-Wallet payment method
+//        PaymentMethodDetailsDTO eWalletDto = result.stream()
+//                .filter(dto -> dto.getId().equals(paymentMethodId3.toString()))
+//                .findFirst()
+//                .orElseThrow();
+//
+//        assertThat(eWalletDto.getName()).isEqualTo("E-Wallet Payment");
+//        assertThat(eWalletDto.getMethodType()).isEqualTo("E_WALLET");
+//        assertThat(eWalletDto.getInstructions()).isEqualTo("Use mobile app to pay");
+//        assertThat(eWalletDto.getOrderCount()).isEqualTo(0); // No orders use E-Wallet
+//
+//        // Verify repository and service calls
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - OrderService throws exception")
+//    void testGetAllPaymentMethodsWithOrderCounts_OrderServiceException() {
+//        // Arrange
+//        setupMockData();
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenThrow(new RuntimeException("Order service unavailable"));
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert - Should return payment methods with 0 order counts due to exception
+//        assertThat(result).hasSize(3);
+//
+//        result.forEach(dto -> {
+//            assertThat(dto.getOrderCount()).isEqualTo(0);
+//            assertThat(dto.getId()).isNotNull();
+//            assertThat(dto.getName()).isNotNull();
+//            assertThat(dto.getMethodType()).isNotNull();
+//        });
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+//
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - OrderService returns empty list")
+//    void testGetAllPaymentMethodsWithOrderCounts_OrderServiceReturnsEmptyList() {
+//        // Arrange
+//        setupMockData();
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(Collections.emptyList());
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert - Should return payment methods with 0 order counts
+//        assertThat(result).hasSize(3);
+//
+//        result.forEach(dto -> {
+//            assertThat(dto.getOrderCount()).isEqualTo(0);
+//            assertThat(dto.getId()).isNotNull();
+//            assertThat(dto.getName()).isNotNull();
+//            assertThat(dto.getMethodType()).isNotNull();
+//        });
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+//
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Empty payment methods list")
+//    void testGetAllPaymentMethodsWithOrderCounts_EmptyPaymentMethods() {
+//        // Arrange
+//        setupMockData();
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(Collections.emptyList());
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(mockOrderData);
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert
+//        assertThat(result).isEmpty();
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Orders with null payment method IDs are filtered out")
+//    void testGetAllPaymentMethodsWithOrderCounts_NullPaymentMethodIds() {
+//        // Arrange
+//        setupMockData();
+//
+//        // Create orders where all have null payment method IDs
+//        List<OrderData> ordersWithNullPaymentMethods = Arrays.asList(
+//                createOrderWithPaymentMethodId(null),
+//                createOrderWithPaymentMethodId(null),
+//                createOrderWithPaymentMethodId(null)
+//        );
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(ordersWithNullPaymentMethods);
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert - All payment methods should have 0 order count since all orders have null payment method IDs
+//        assertThat(result).hasSize(3);
+//
+//        result.forEach(dto -> {
+//            assertThat(dto.getOrderCount()).isEqualTo(0);
+//        });
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+
+    @Test
+//    @DisplayName("determinePaymentMethodTypeString - Unknown payment method type throws exception")
+//    void testDeterminePaymentMethodTypeString_UnknownType() {
+//        // Arrange
+//        PaymentMethod unknownPaymentMethod = mock(PaymentMethod.class);
+//        when(unknownPaymentMethod.getId()).thenReturn(UUID.randomUUID());
+//        when(unknownPaymentMethod.getName()).thenReturn("Unknown Payment");
+//
+//        List<PaymentMethod> paymentMethodsWithUnknown = Arrays.asList(unknownPaymentMethod);
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(paymentMethodsWithUnknown);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(Collections.emptyList());
+//
+//        // Act & Assert
+//        assertThatThrownBy(() -> paymentMethodService.getAllPaymentMethodsWithOrderCounts(request))
+//                .isInstanceOf(IllegalArgumentException.class)
+//                .hasMessageContaining("Unknown PaymentMethod subclass:");
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Mixed scenario with various order counts")
+//    void testGetAllPaymentMethodsWithOrderCounts_MixedScenario() {
+//        // Arrange
+//        setupMockData();
+//
+//        // Create additional orders to test different scenarios
+//        List<OrderData> mixedOrders = Arrays.asList(
+//                createOrderWithPaymentMethodId(paymentMethodId1), // COD
+//                createOrderWithPaymentMethodId(paymentMethodId1), // COD
+//                createOrderWithPaymentMethodId(paymentMethodId1), // COD
+//                createOrderWithPaymentMethodId(paymentMethodId2), // Bank Transfer
+//                createOrderWithPaymentMethodId(paymentMethodId2), // Bank Transfer
+//                createOrderWithPaymentMethodId(paymentMethodId3), // E-Wallet
+//                createOrderWithPaymentMethodId(null), // Should be filtered out
+//                createOrderWithPaymentMethodId(UUID.randomUUID()) // Non-existent payment method ID
+//        );
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(mixedOrders);
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert
+//        assertThat(result).hasSize(3);
+//
+//        // Check COD (should have 3 orders)
+//        PaymentMethodDetailsDTO codDto = result.stream()
+//                .filter(dto -> dto.getId().equals(paymentMethodId1.toString()))
+//                .findFirst()
+//                .orElseThrow();
+//        assertThat(codDto.getOrderCount()).isEqualTo(3);
+//
+//        // Check Bank Transfer (should have 2 orders)
+//        PaymentMethodDetailsDTO bankTransferDto = result.stream()
+//                .filter(dto -> dto.getId().equals(paymentMethodId2.toString()))
+//                .findFirst()
+//                .orElseThrow();
+//        assertThat(bankTransferDto.getOrderCount()).isEqualTo(2);
+//
+//        // Check E-Wallet (should have 1 order)
+//        PaymentMethodDetailsDTO eWalletDto = result.stream()
+//                .filter(dto -> dto.getId().equals(paymentMethodId3.toString()))
+//                .findFirst()
+//                .orElseThrow();
+//        assertThat(eWalletDto.getOrderCount()).isEqualTo(1);
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+//
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - COD payment method without instructions")
+//    void testGetAllPaymentMethodsWithOrderCounts_CODWithoutInstructions() {
+//        // Arrange
+//        COD codMethodWithoutInstructions = new COD();
+//        codMethodWithoutInstructions.setId(paymentMethodId1);
+//        codMethodWithoutInstructions.setName("Cash on Delivery");
+//        // Not setting instructions (will be null)
+//
+//        List<PaymentMethod> paymentMethods = Arrays.asList(codMethodWithoutInstructions);
+//        List<OrderData> orders = Arrays.asList(createOrderWithPaymentMethodId(paymentMethodId1));
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(paymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(orders);
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert
+//        assertThat(result).hasSize(1);
+//        PaymentMethodDetailsDTO dto = result.get(0);
+//        assertThat(dto.getInstructions()).isNull();
+//        assertThat(dto.getOrderCount()).isEqualTo(1);
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+
+//    @Test
+//    @DisplayName("getAllPaymentMethodsWithOrderCounts - EWallet payment method without instructions")
+//    void testGetAllPaymentMethodsWithOrderCounts_EWalletWithoutInstructions() {
+//        // Arrange
+//        EWallet eWalletMethodWithoutInstructions = new EWallet();
+//        eWalletMethodWithoutInstructions.setId(paymentMethodId3);
+//        eWalletMethodWithoutInstructions.setName("E-Wallet Payment");
+//        // Not setting instructions (will be null)
+//
+//        List<PaymentMethod> paymentMethods = Arrays.asList(eWalletMethodWithoutInstructions);
+//        List<OrderData> orders = Arrays.asList(createOrderWithPaymentMethodId(paymentMethodId3));
+//
+//        when(paymentMethodRepository.findAll()).thenReturn(paymentMethods);
+//        when(orderServiceClient.getAllOrders(request)).thenReturn(orders);
+//
+//        // Act
+//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
+//
+//        // Assert
+//        assertThat(result).hasSize(1);
+//        PaymentMethodDetailsDTO dto = result.get(0);
+//        assertThat(dto.getInstructions()).isNull();
+//        assertThat(dto.getOrderCount()).isEqualTo(1);
+//
+//        verify(paymentMethodRepository).findAll();
+//        verify(orderServiceClient).getAllOrders(request);
+//    }
+
+    // Helper method to create OrderData with specific payment method ID
+    private OrderData createOrderWithPaymentMethodId(UUID paymentMethodId) {
+        OrderData order = new OrderData();
+        order.setId(UUID.randomUUID());
+        order.setPaymentMethodId(paymentMethodId);
+        order.setItemName("Test Item");
+        return order;
+    }
 
 }
