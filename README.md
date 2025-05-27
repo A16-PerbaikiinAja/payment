@@ -100,12 +100,20 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 ### 💲Progress Milestone Payment Service💲
 
 
-| Komponen                                                                                                     |
-|--------------------------------------------------------------------------------------------------------------|
-| **Software Design** (SOLID Principles, Maintainability, Design Patterns)                                     | 
-| **Software Quality** (Clean Code, Secure Coding, Testing, Profiling)                                         |
-| **Software Architecture** (Architecture, Concurrency, Asynchronous, High Level Networking)                   |
-| **Software Deployment** (CI/CD, Deployment Strategies, Containerization, Monitoring, Infrastructure as Code) |
+| Komponen                                                                                   |
+|--------------------------------------------------------------------------------------------|
+| **Software Design** (SOLID Principles, Maintainability, Design Patterns)                   | 
+| **Software Quality** (Clean Code, Secure Coding, Testing, Profiling)                       |
+| **Software Architecture** (Architecture, Concurrency, Asynchronous, High Level Networking) |
+| **Software Deployment** (CI/CD, Deployment Strategies, Containerization, Monitoring, Infrastructure as Code)     |
+
+---
+
+📌 **Progress Milestone 90%**:
+
+> Pada milestone 90%, Payment Service sudah mencapai fungsionalitas penuh dengan integrasi frontend dan backend yang berjalan baik. Fitur utama, security, dan aspek operasional telah terimplementasi.
+> Poin pentingnya, fitur statistik (counts penggunaan metode pembayaran) untuk admin sudah berjalan secara asynchronous menggunakan `CompletableFuture` saat berinteraksi dengan Order Service, menjaga API tetap responsif. 
+> Persiapan untuk monitoring log menggunakan Grafana dan Prometheus juga sudah sejalan dengan rencana teknis, dan konfigurasi aplikasi dikelola melalui kode, mendukung prinsip IaC.
 
 ---
 
@@ -163,7 +171,7 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 - **Mocking**: Sudah menggunakan mocking (`Mockito`) untuk memastikan bahwa unit tests tidak bergantung pada implementasi yang lebih besar, seperti database.
 - **Test Coverage**: Masih bisa ditambahkan lebih banyak jalur yang mungkin (misalnya validasi input yang salah, kesalahan autentikasi) dan memastikan kode bisa diubah tanpa merusak fungsionalitas yang ada.
 
-**Profiling**:
+**Profiling ✏️**:
 
 Pada tahap profiling, saya menggunakan fitur IntelliJ Profiler untuk menganalisis performa aplikasi PaymentApplication. Profiling dilakukan dengan menjalankan aplikasi dalam mode profiler di IntelliJ sehingga dapat merekam aktivitas CPU, memori, serta panggilan metode secara detail selama aplikasi berjalan.
 Profiling menghasilkan visualisasi seperti Flame Graph yang menunjukkan waktu CPU yang digunakan oleh setiap metode, sehingga dapat diidentifikasi bagian-bagian kode yang paling berat atau sering dipanggil. Dari hasil profiling ini, terlihat bahwa metode utama yang menjalankan logika bisnis aplikasi mendapat alokasi waktu CPU yang signifikan, namun terdapat beberapa metode library dan framework yang juga memberikan beban pemrosesan.
@@ -177,6 +185,8 @@ Profiling menghasilkan visualisasi seperti Flame Graph yang menunjukkan waktu CP
 - Integrasikan dengan monitoring runtime (misalnya Prometheus + Grafana) untuk melihat performa dalam kondisi beban nyata dan menemukan potensi bottleneck lainnya.
 
 ![PROFILING](img/profiling.png)
+
+![PROFILING](img/profiling2.png)
 
 ---
 
@@ -214,7 +224,7 @@ Profiling menghasilkan visualisasi seperti Flame Graph yang menunjukkan waktu CP
 **Containerization 🐳**
 - Menggunakan **Docker** untuk membangun image dan meng-deploy aplikasi ke EC2. Docker memastikan aplikasi berjalan konsisten di berbagai environment (dev, staging, production).
 
-**Monitoring**
+**Monitoring 📈**
 
 - Spring Boot Actuator memudahkan expose berbagai metrik penting aplikasi (seperti HTTP request, memory JVM, CPU usage) secara langsung tanpa perlu banyak konfigurasi manual.
 
@@ -225,5 +235,40 @@ Profiling menghasilkan visualisasi seperti Flame Graph yang menunjukkan waktu CP
 - Prometheus meng-scrape endpoint /actuator/prometheus secara berkala setiap 3 detik (dikonfigurasi di prometheus.yml).
 
 - Grafana membaca data dari Prometheus datasource dan menampilkan metrik seperti JVM memory usage, CPU load, HTTP request rates dalam bentuk grafik dan panel interaktif.
+
+![MONITORING](img/monitoring1.png)
+
+![MONITORING](img/monitoring2.png)
+
+- **Uptime dan Start Time -** Dashboard menunjukkan aplikasi JVM telah berjalan selama sekitar 25,5 menit, dengan waktu mulai yang tercatat secara tepat. Ini menandakan aplikasi dalam kondisi aktif dan stabil dalam periode tersebut.
+
+- **Heap dan Non-Heap Memory -** Penggunaan heap memory dan non-heap memory masih relatif rendah, dengan persentase penggunaan di bawah 10%. Ini menunjukkan alokasi memori aplikasi masih dalam batas aman dan tidak terjadi tekanan memori berlebih.
+
+- **CPU Usage dan Load -** Penggunaan CPU dari JVM juga terlihat rendah, mengindikasikan bahwa aplikasi tidak mengalami beban berat atau bottleneck pada sisi pemrosesan CPU.
+
+- **Thread Status -** Status thread yang berjalan, menunggu, atau terblokir dapat dipantau di sini. Thread yang aktif menunjukkan aplikasi berjalan lancar tanpa adanya deadlock atau bottleneck di proses paralel.
+
+- **Garbage Collection -** Grafik terkait garbage collection (pengumpulan sampah memori) menunjukkan pola eksekusi yang stabil tanpa adanya lonjakan durasi pause GC yang berarti. 
+
+- **Class Loading dan Buffer Pools -** Monitoring terhadap jumlah class yang dimuat serta buffer pools memberikan gambaran aktivitas loading class dan penggunaan buffer, yang masih dalam keadaan normal.
+
+- **Memory Pools Detail -** Penggunaan detail berbagai memory pools di JVM (Eden Space, Old Gen, Survivor Space, Metaspace, dll.) memberikan informasi rinci mengenai distribusi dan penggunaan memori, membantu dalam analisis performa dan potensi memory leak.
+
+
+**Infrastructure as Code (IaC) ⚙️**
+
+- Konfigurasi Database melalui Spring Boot:
+
+  - Skema database (pembuatan tabel, relasi, kolom) dan pengaturan koneksi database dikelola melalui properti dan anotasi di dalam kode aplikasi Spring Boot.
+
+  - Penggunaan `spring.jpa.hibernate.ddl-auto` (misalnya, update) di `application.properties` memungkinkan Hibernate untuk secara otomatis menyesuaikan atau memvalidasi skema database berdasarkan definisi entitas Java (`@Entity`).
+
+  - Detail koneksi seperti URL database, username, dan password juga dikelola dalam file `application.properties`, yang bisa di-override oleh environment variables untuk lingkungan yang berbeda (development, staging, production).
+
+- Manajemen Dependensi dan Lingkungan Aplikasi:
+
+  - File seperti `build.gradle.kts` mendefinisikan semua dependensi library yang dibutuhkan aplikasi secara kode. Ini memastikan setiap developer dan lingkungan deployment menggunakan versi library yang sama.
+
+  - Penggunaan Docker (dengan Dockerfile) juga merupakan bentuk IaC, di mana lingkungan runtime aplikasi (termasuk OS, Java version, dan dependensi lainnya) didefinisikan dalam sebuah file kode.
 
 ---
