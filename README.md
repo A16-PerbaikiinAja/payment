@@ -117,8 +117,6 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 
 ![TDD](img/JacocoTest.png)
 
-_**https://sonarcloud.io/summary/overall?id=A16-PerbaikiinAja_payment&branch=main**_
-
 ![Sonar_Cloud](img/SonarCloud.png)
 
 ---

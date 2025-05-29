@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.payment.service;
 
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
-//import id.ac.ui.cs.advprog.payment.external.OrderData;
 import id.ac.ui.cs.advprog.payment.external.OrderServiceClient;
 import id.ac.ui.cs.advprog.payment.model.*;
 import id.ac.ui.cs.advprog.payment.repository.*;
@@ -24,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -52,14 +50,6 @@ class PaymentMethodServiceImplTest {
     private PaymentMethodDetailsDTO sampleDTO;
     private List<PaymentMethodDetailsDTO> sampleDTOList;
     private PaymentMethodServiceImpl paymentMethodServiceSpy;
-
-    // --- TAMBAHKAN DEKLARASI FIELD INI ---
-    private COD testCOD;
-    private BankTransfer testBankTransfer;
-    private EWallet testEWallet;
-    private List<PaymentMethod> mockLocalPaymentMethods; // Ini juga perlu dideklarasikan jika belum
-    // ------------------------------------
-
 
     @BeforeEach
     void setUp() {
@@ -100,15 +90,6 @@ class PaymentMethodServiceImplTest {
 //        setupTestEntities();
 
     }
-
-//    private void mockSecurityContext() {
-//        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class)) {
-//            mockedSecurityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-//            when(securityContext.getAuthentication()).thenReturn(authentication);
-//            when(authentication.isAuthenticated()).thenReturn(true);
-//            when(authentication.getPrincipal()).thenReturn(USER_ID.toString());
-//        }
-//    }
 
     @Nested
     class GetCurrentUserIdTest {
@@ -1102,145 +1083,6 @@ class PaymentMethodServiceImplTest {
             verify(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
         }
     }
-
-//
-//    private void setupTestEntities() {
-//        PaymentMethod baseCOD = new PaymentMethod();
-//        baseCOD.setId(UUID.randomUUID());
-//        baseCOD.setName("Test COD");
-//        baseCOD.setCreatedBy(USER_ID);
-//        testCOD = new COD(baseCOD);
-//        testCOD.setInstructions("COD Instructions");
-//
-//        PaymentMethod baseBankTransfer = new PaymentMethod();
-//        baseBankTransfer.setId(UUID.randomUUID());
-//        baseBankTransfer.setName("Test Bank Transfer");
-//        baseBankTransfer.setCreatedBy(USER_ID);
-//        testBankTransfer = new BankTransfer(baseBankTransfer);
-//
-//        PaymentMethod baseEWallet = new PaymentMethod();
-//        baseEWallet.setId(UUID.randomUUID());
-//        baseEWallet.setName("Test E-Wallet");
-//        baseEWallet.setCreatedBy(USER_ID);
-//        testEWallet = new EWallet(baseEWallet);
-//        testEWallet.setInstructions("E-Wallet Instructions");
-//
-//        mockLocalPaymentMethods = Arrays.asList(testCOD, testBankTransfer, testEWallet);
-//    }
-//
-
-//    @Nested
-//    class GetAllPaymentMethodsWithOrderCountsAsyncTest {
-//
-//        @Test
-//        void getAllPaymentMethodsWithOrderCountsAsync_Success() throws Exception {
-//            when(paymentMethodRepository.findAll()).thenReturn(mockLocalPaymentMethods);
-//
-//            OrderData orderCOD1 = new OrderData();
-//            orderCOD1.setPaymentMethodId(testCOD.getId());
-//            OrderData orderCOD2 = new OrderData();
-//            orderCOD2.setPaymentMethodId(testCOD.getId());
-//            OrderData orderBT1 = new OrderData();
-//            orderBT1.setPaymentMethodId(testBankTransfer.getId());
-//            OrderData orderUnmatched = new OrderData();
-//            orderUnmatched.setPaymentMethodId(UUID.randomUUID());
-//            OrderData orderNullId = new OrderData();
-//            orderNullId.setPaymentMethodId(null);
-//
-//
-//            List<OrderData> mockFetchedOrders = Arrays.asList(orderCOD1, orderCOD2, orderBT1, orderUnmatched, orderNullId);
-//            when(orderServiceClient.getAllOrders(any(HttpServletRequest.class))).thenReturn(mockFetchedOrders);
-//
-//            CompletableFuture<List<PaymentMethodDetailsDTO>> futureResult =
-//                    paymentMethodService.getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
-//
-//            List<PaymentMethodDetailsDTO> resultList = futureResult.get(5, TimeUnit.SECONDS);
-//
-//            assertNotNull(resultList);
-//            assertEquals(3, resultList.size());
-//
-//            PaymentMethodDetailsDTO codDto = resultList.stream()
-//                    .filter(dto -> dto.getId().equals(testCOD.getId().toString()))
-//                    .findFirst().orElseThrow();
-//            assertEquals(2, codDto.getOrderCount());
-//            assertEquals("Test COD", codDto.getName());
-//            assertEquals("COD", codDto.getMethodType());
-//            assertEquals("COD Instructions", codDto.getInstructions());
-//
-//            PaymentMethodDetailsDTO btDto = resultList.stream()
-//                    .filter(dto -> dto.getId().equals(testBankTransfer.getId().toString()))
-//                    .findFirst().orElseThrow();
-//            assertEquals(1, btDto.getOrderCount());
-//            assertEquals("Test Bank Transfer", btDto.getName());
-//            assertEquals("BANK_TRANSFER", btDto.getMethodType());
-//            assertNull(btDto.getInstructions());
-//
-//            PaymentMethodDetailsDTO ewDto = resultList.stream()
-//                    .filter(dto -> dto.getId().equals(testEWallet.getId().toString()))
-//                    .findFirst().orElseThrow();
-//            assertEquals(0, ewDto.getOrderCount());
-//            assertEquals("Test E-Wallet", ewDto.getName());
-//            assertEquals("E_WALLET", ewDto.getMethodType());
-//            assertEquals("E-Wallet Instructions", ewDto.getInstructions());
-//
-//            verify(paymentMethodRepository).findAll();
-//            verify(orderServiceClient).getAllOrders(mockRequest);
-//        }
-//
-//        @Test
-//        void getAllPaymentMethodsWithOrderCountsAsync_OrderServiceException() throws Exception {
-//            when(paymentMethodRepository.findAll()).thenReturn(mockLocalPaymentMethods);
-//            when(orderServiceClient.getAllOrders(any(HttpServletRequest.class)))
-//                    .thenThrow(new RuntimeException("Simulated Order Service Unavailable"));
-//
-//            CompletableFuture<List<PaymentMethodDetailsDTO>> futureResult =
-//                    paymentMethodService.getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
-//
-//            List<PaymentMethodDetailsDTO> resultList = futureResult.get(5, TimeUnit.SECONDS);
-//
-//            assertNotNull(resultList);
-//            assertEquals(mockLocalPaymentMethods.size(), resultList.size());
-//            resultList.forEach(dto -> assertEquals(0, dto.getOrderCount()));
-//
-//            verify(paymentMethodRepository).findAll();
-//            verify(orderServiceClient).getAllOrders(mockRequest);
-//        }
-//
-//        @Test
-//        void getAllPaymentMethodsWithOrderCountsAsync_EmptyOrderListFromService() throws Exception {
-//            when(paymentMethodRepository.findAll()).thenReturn(mockLocalPaymentMethods);
-//            when(orderServiceClient.getAllOrders(any(HttpServletRequest.class))).thenReturn(Collections.emptyList());
-//
-//            CompletableFuture<List<PaymentMethodDetailsDTO>> futureResult =
-//                    paymentMethodService.getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
-//
-//            List<PaymentMethodDetailsDTO> resultList = futureResult.get(5, TimeUnit.SECONDS);
-//
-//            assertNotNull(resultList);
-//            assertEquals(mockLocalPaymentMethods.size(), resultList.size());
-//            resultList.forEach(dto -> assertEquals(0, dto.getOrderCount()));
-//
-//            verify(paymentMethodRepository).findAll();
-//            verify(orderServiceClient).getAllOrders(mockRequest);
-//        }
-//
-//        @Test
-//        void getAllPaymentMethodsWithOrderCountsAsync_EmptyLocalPaymentMethods() throws Exception {
-//            when(paymentMethodRepository.findAll()).thenReturn(Collections.emptyList());
-//            when(orderServiceClient.getAllOrders(any(HttpServletRequest.class))).thenReturn(Collections.emptyList());
-//
-//            CompletableFuture<List<PaymentMethodDetailsDTO>> futureResult =
-//                    paymentMethodService.getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
-//
-//            List<PaymentMethodDetailsDTO> resultList = futureResult.get(5, TimeUnit.SECONDS);
-//
-//            assertNotNull(resultList);
-//            assertTrue(resultList.isEmpty());
-//
-//            verify(paymentMethodRepository).findAll();
-//            verify(orderServiceClient).getAllOrders(mockRequest);
-//        }
-//    }
 
 
 
