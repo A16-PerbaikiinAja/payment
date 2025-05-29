@@ -27,17 +27,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-class PaymentServiceTimeoutException extends RuntimeException {
-    public PaymentServiceTimeoutException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
-
-class PaymentServiceException extends RuntimeException {
-    public PaymentServiceException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
 
 @Slf4j
 @Service
@@ -337,17 +326,26 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
         CompletableFuture<List<OrderData>> allOrdersFuture = CompletableFuture.supplyAsync(
                 () -> {
-                    System.out.println("Memulai panggilan async ke OrderServiceClient.getAllOrders() (Thread: " + Thread.currentThread().getName() + ")");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Memulai panggilan async ke OrderServiceClient.getAllOrders() (Thread: {})",
+                                Thread.currentThread().getName());
+                    }
                     return orderServiceClient.getAllOrders(request);
                 },
                 customExecutor
         ).exceptionally(ex -> {
-            System.err.println("ERROR SERVICEIMPL: Gagal mengambil data list order dari Order Service: " + ex.getMessage());
+            if (log.isErrorEnabled()) {
+                log.error("ERROR SERVICEIMPL: Gagal mengambil data list order dari Order Service: {}", ex.getMessage(), ex);
+            }
             return Collections.emptyList();
         });
 
         return allOrdersFuture.thenApplyAsync(allFetchedOrders -> {
-            log.info("Memulai pemrosesan data order yang diterima di ServiceImpl (Thread: " + Thread.currentThread().getName() + ")");
+            if (log.isInfoEnabled()) {
+                log.info("Memulai pemrosesan data order yang diterima di ServiceImpl (Thread: {})",
+                        Thread.currentThread().getName());
+            }
+
             Map<String, Long> countsByPaymentMethodId = allFetchedOrders.stream()
                     .filter(orderData -> orderData.getPaymentMethodId() != null)
                     .collect(Collectors.groupingBy(
@@ -373,7 +371,9 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 return dto;
             }).collect(Collectors.toList());
 
-            log.info("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
+            if (log.isInfoEnabled()) {
+                log.info("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
+            }
             return resultDetails;
         }, customExecutor);
     }
@@ -381,15 +381,19 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     @Override
     public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request) {
         try {
-            log.debug("Getting payment methods with order counts with 30 second timeout");
+            if (log.isDebugEnabled()) {
+                log.debug("Getting payment methods with order counts with 30 second timeout");
+            }
             return getAllPaymentMethodsWithOrderCountsAsync(request)
                     .get(30, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            log.error("Timeout: Failed to get data within 30 seconds", e);
-            throw new PaymentServiceTimeoutException("Service timeout - external service too slow", e);
+            if (log.isErrorEnabled()) {
+                log.error("Timeout: Failed to get data within 30 seconds", e);
+            }
+            throw new RuntimeException("Service timeout - external service too slow", e);
         } catch (Exception e) {
             log.error("Error: Failed to get payment methods: {}", e.getMessage(), e);
-            throw new PaymentServiceException("Service error", e);
+            throw new RuntimeException("Service error: " + e.getMessage(), e);
         }
     }
 
