@@ -23,9 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -321,8 +319,56 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     }
 
 
-    @Override
-    public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request) {
+//    @Override
+//    public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request) {
+//        List<PaymentMethod> localPaymentMethods = paymentMethodRepository.findAll();
+//
+//        CompletableFuture<List<OrderData>> allOrdersFuture = CompletableFuture.supplyAsync(
+//                () -> {
+//                    System.out.println("Memulai panggilan async ke OrderServiceClient.getAllOrders() (Thread: " + Thread.currentThread().getName() + ")");
+//                    return orderServiceClient.getAllOrders(request);
+//                },
+//                customExecutor
+//        ).exceptionally(ex -> {
+//            System.err.println("ERROR SERVICEIMPL: Gagal mengambil data list order dari Order Service: " + ex.getMessage());
+//            return Collections.emptyList();
+//        });
+//
+//        return allOrdersFuture.thenApplyAsync(allFetchedOrders -> {
+//            System.out.println("Memulai pemrosesan data order yang diterima di ServiceImpl (Thread: " + Thread.currentThread().getName() + ")");
+//            Map<String, Long> countsByPaymentMethodId = allFetchedOrders.stream()
+//                    .filter(orderData -> orderData.getPaymentMethodId() != null)
+//                    .collect(Collectors.groupingBy(
+//                            orderData -> orderData.getPaymentMethodId().toString(),
+//                            Collectors.counting()
+//                    ));
+//
+//            List<PaymentMethodDetailsDTO> resultDetails = localPaymentMethods.stream().map(method -> {
+//                PaymentMethodDetailsDTO dto = new PaymentMethodDetailsDTO();
+//                String currentMethodId = method.getId().toString();
+//
+//                dto.setId(currentMethodId);
+//                dto.setName(method.getName());
+//                dto.setMethodType(determinePaymentMethodTypeString(method));
+//
+//                if (method instanceof COD) {
+//                    dto.setInstructions(((COD) method).getInstructions());
+//                } else if (method instanceof EWallet) {
+//                    dto.setInstructions(((EWallet) method).getInstructions());
+//                }
+//
+//                dto.setOrderCount(countsByPaymentMethodId.getOrDefault(currentMethodId, 0L).intValue());
+//                return dto;
+//            }).collect(Collectors.toList());
+//
+//            System.out.println("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
+//            return resultDetails;
+//        }, customExecutor).join();
+//    }
+//
+
+
+    public CompletableFuture<List<PaymentMethodDetailsDTO>> getAllPaymentMethodsWithOrderCountsAsync(HttpServletRequest request) {
         List<PaymentMethod> localPaymentMethods = paymentMethodRepository.findAll();
 
         CompletableFuture<List<OrderData>> allOrdersFuture = CompletableFuture.supplyAsync(
@@ -365,11 +411,25 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
             System.out.println("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
             return resultDetails;
-        }, customExecutor).join();
+        }, customExecutor);
     }
 
+    @Override
+    public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request) {
+        try {
+            // Pakai timeout biar tidak hang forever
+            return getAllPaymentMethodsWithOrderCountsAsync(request)
+                    .get(30, TimeUnit.SECONDS); // timeout 30 detik
+        } catch (TimeoutException e) {
+            System.err.println("TIMEOUT: Gagal mendapatkan data dalam 30 detik");
+            throw new RuntimeException("Service timeout - external service too slow", e);
+        } catch (Exception e) {
+            System.err.println("ERROR: Gagal mendapatkan payment methods: " + e.getMessage());
+            throw new RuntimeException("Service error", e);
+        }
+    }
 
-    private String determinePaymentMethodTypeString(PaymentMethod method) {
+    String determinePaymentMethodTypeString(PaymentMethod method) {
         if (method instanceof COD) {
             return PaymentMethodType.COD.toString();
         } else if (method instanceof BankTransfer) {
