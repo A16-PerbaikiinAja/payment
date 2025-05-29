@@ -87,8 +87,6 @@ class PaymentMethodServiceImplTest {
         sampleDTO.setOrderCount(10);
         sampleDTOList = Collections.singletonList(sampleDTO);
 
-//        setupTestEntities();
-
     }
 
     @Nested

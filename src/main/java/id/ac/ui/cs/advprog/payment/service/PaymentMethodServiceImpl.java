@@ -14,6 +14,7 @@ import id.ac.ui.cs.advprog.payment.repository.EWalletRepository;
 import id.ac.ui.cs.advprog.payment.repository.PaymentMethodRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,19 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+class PaymentServiceTimeoutException extends RuntimeException {
+    public PaymentServiceTimeoutException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+class PaymentServiceException extends RuntimeException {
+    public PaymentServiceException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentMethodServiceImpl implements PaymentMethodService {
@@ -333,7 +347,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
         });
 
         return allOrdersFuture.thenApplyAsync(allFetchedOrders -> {
-            System.out.println("Memulai pemrosesan data order yang diterima di ServiceImpl (Thread: " + Thread.currentThread().getName() + ")");
+            log.info("Memulai pemrosesan data order yang diterima di ServiceImpl (Thread: " + Thread.currentThread().getName() + ")");
             Map<String, Long> countsByPaymentMethodId = allFetchedOrders.stream()
                     .filter(orderData -> orderData.getPaymentMethodId() != null)
                     .collect(Collectors.groupingBy(
@@ -359,7 +373,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 return dto;
             }).collect(Collectors.toList());
 
-            System.out.println("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
+            log.info("Semua data berhasil diproses dan digabungkan di ServiceImpl.");
             return resultDetails;
         }, customExecutor);
     }
@@ -367,15 +381,15 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     @Override
     public List<PaymentMethodDetailsDTO> getAllPaymentMethodsWithOrderCounts(HttpServletRequest request) {
         try {
-            // Pakai timeout biar tidak hang forever
+            log.debug("Getting payment methods with order counts with 30 second timeout");
             return getAllPaymentMethodsWithOrderCountsAsync(request)
-                    .get(30, TimeUnit.SECONDS); // timeout 30 detik
+                    .get(30, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            System.err.println("TIMEOUT: Gagal mendapatkan data dalam 30 detik");
-            throw new RuntimeException("Service timeout - external service too slow", e);
+            log.error("Timeout: Failed to get data within 30 seconds", e);
+            throw new PaymentServiceTimeoutException("Service timeout - external service too slow", e);
         } catch (Exception e) {
-            System.err.println("ERROR: Gagal mendapatkan payment methods: " + e.getMessage());
-            throw new RuntimeException("Service error", e);
+            log.error("Error: Failed to get payment methods: {}", e.getMessage(), e);
+            throw new PaymentServiceException("Service error", e);
         }
     }
 
