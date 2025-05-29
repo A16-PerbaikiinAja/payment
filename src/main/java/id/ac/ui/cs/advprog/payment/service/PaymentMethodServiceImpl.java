@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.payment.service;
 
+import id.ac.ui.cs.advprog.payment.exception.PaymentServiceException;
+import id.ac.ui.cs.advprog.payment.exception.PaymentServiceTimeoutException;
 import id.ac.ui.cs.advprog.payment.external.OrderData;
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
 import id.ac.ui.cs.advprog.payment.enums.PaymentMethodType;
@@ -390,10 +392,10 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
             if (log.isErrorEnabled()) {
                 log.error("Timeout: Failed to get data within 30 seconds", e);
             }
-            throw new RuntimeException("Service timeout - external service too slow", e);
+            throw new PaymentServiceTimeoutException("Service timeout - external service too slow", e);
         } catch (Exception e) {
             log.error("Error: Failed to get payment methods: {}", e.getMessage(), e);
-            throw new RuntimeException("Service error: " + e.getMessage(), e);
+            throw new PaymentServiceException("Service error", e);
         }
     }
 
