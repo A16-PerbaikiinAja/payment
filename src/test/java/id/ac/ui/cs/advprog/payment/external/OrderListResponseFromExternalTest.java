@@ -40,12 +40,8 @@ class OrderListResponseFromExternalTest {
     @Test
     void testSettersAndGetters() {
         response = new OrderListResponseFromExternal();
-
-        // Test setters
         response.setOrders(testOrders);
         response.setCount(5);
-
-        // Test getters
         assertEquals(testOrders, response.getOrders());
         assertEquals(5, response.getCount());
     }
@@ -272,14 +268,11 @@ class OrderListResponseFromExternalTest {
         List<OrderData> modifiableList = new ArrayList<>(testOrders);
         response = new OrderListResponseFromExternal(modifiableList, 2);
 
-        // Verify initial state
         assertEquals(2, response.getOrders().size());
 
-        // Add new order to the list
         OrderData newOrder = new OrderData(UUID.randomUUID(), UUID.randomUUID(), "New Item");
         response.getOrders().add(newOrder);
 
-        // Verify list was modified
         assertEquals(3, response.getOrders().size());
         assertTrue(response.getOrders().contains(newOrder));
     }
@@ -292,7 +285,6 @@ class OrderListResponseFromExternalTest {
 
         assertTrue(response.getOrders().isEmpty());
         assertEquals(0, response.getOrders().size());
-        // Count remains unchanged
         assertEquals(2, response.getCount());
     }
 

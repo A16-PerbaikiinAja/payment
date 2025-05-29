@@ -1,8 +1,6 @@
 package id.ac.ui.cs.advprog.payment.service;
 
 import id.ac.ui.cs.advprog.payment.dto.paymentmethod.*;
-import id.ac.ui.cs.advprog.payment.enums.PaymentMethodType;
-import id.ac.ui.cs.advprog.payment.external.OrderData;
 import id.ac.ui.cs.advprog.payment.external.OrderServiceClient;
 import id.ac.ui.cs.advprog.payment.model.*;
 import id.ac.ui.cs.advprog.payment.repository.*;
@@ -12,16 +10,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -41,16 +41,15 @@ class PaymentMethodServiceImplTest {
     private Authentication authentication;
     private SecurityContext securityContext;
     private ExecutorService mockExecutor;
-    private HttpServletRequest request;
+    private HttpServletRequest mockRequest;
 
-    private List<PaymentMethod> mockPaymentMethods;
-    private List<OrderData> mockOrderData;
-    private UUID paymentMethodId1;
-    private UUID paymentMethodId2;
-    private UUID paymentMethodId3;
 
     private final UUID USER_ID = UUID.randomUUID();
     private final UUID PAYMENT_METHOD_ID = UUID.randomUUID();
+
+    private PaymentMethodDetailsDTO sampleDTO;
+    private List<PaymentMethodDetailsDTO> sampleDTOList;
+    private PaymentMethodServiceImpl paymentMethodServiceSpy;
 
     @BeforeEach
     void setUp() {
@@ -63,7 +62,7 @@ class PaymentMethodServiceImplTest {
         authentication = mock(Authentication.class);
         securityContext = mock(SecurityContext.class);
         mockExecutor = mock(ExecutorService.class);
-        request = mock(HttpServletRequest.class);
+        mockRequest = mock(HttpServletRequest.class);
 
         // Create service instance
         paymentMethodService = new PaymentMethodServiceImpl(orderServiceClient, codRepository, bankTransferRepository, eWalletRepository);
@@ -78,59 +77,16 @@ class PaymentMethodServiceImplTest {
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getPrincipal()).thenReturn(USER_ID.toString());
 
-        paymentMethodId1 = UUID.randomUUID();
-        paymentMethodId2 = UUID.randomUUID();
-        paymentMethodId3 = UUID.randomUUID();
+        // Inisialisasi spy untuk testing method yang memanggil method lain di kelas yang sama
+        paymentMethodServiceSpy = spy(paymentMethodService);
 
-        // Setup mock payment methods
-        COD codMethod = new COD();
-        codMethod.setId(paymentMethodId1);
-        codMethod.setName("Cash on Delivery");
-        codMethod.setInstructions("Pay when the order arrives");
+        // Setup sample DTO
+        sampleDTO = new PaymentMethodDetailsDTO();
+        sampleDTO.setId(PAYMENT_METHOD_ID.toString());
+        sampleDTO.setName("Test Method");
+        sampleDTO.setOrderCount(10);
+        sampleDTOList = Collections.singletonList(sampleDTO);
 
-        BankTransfer bankTransferMethod = new BankTransfer();
-        bankTransferMethod.setId(paymentMethodId2);
-        bankTransferMethod.setName("Bank Transfer");
-
-        EWallet eWalletMethod = new EWallet();
-        eWalletMethod.setId(paymentMethodId3);
-        eWalletMethod.setName("E-Wallet Payment");
-        eWalletMethod.setInstructions("Use mobile app to pay");
-
-    }
-
-    private void setupMockData() {
-        // Setup mock payment methods
-        COD codMethod = new COD();
-        codMethod.setId(paymentMethodId1);
-        codMethod.setName("Cash on Delivery");
-        codMethod.setInstructions("Pay when the order arrives");
-
-        BankTransfer bankTransferMethod = new BankTransfer();
-        bankTransferMethod.setId(paymentMethodId2);
-        bankTransferMethod.setName("Bank Transfer");
-
-        EWallet eWalletMethod = new EWallet();
-        eWalletMethod.setId(paymentMethodId3);
-        eWalletMethod.setName("E-Wallet Payment");
-        eWalletMethod.setInstructions("Use mobile app to pay");
-
-        mockPaymentMethods = Arrays.asList(codMethod, bankTransferMethod, eWalletMethod);
-
-        // Setup mock order data
-        OrderData order1 = new OrderData();
-        order1.setPaymentMethodId(paymentMethodId1);
-
-        OrderData order2 = new OrderData();
-        order2.setPaymentMethodId(paymentMethodId1);
-
-        OrderData order3 = new OrderData();
-        order3.setPaymentMethodId(paymentMethodId2);
-
-        OrderData order4 = new OrderData();
-        order4.setPaymentMethodId(null); // Order without payment method
-
-        mockOrderData = Arrays.asList(order1, order2, order3, order4);
     }
 
     @Nested
@@ -326,7 +282,7 @@ class PaymentMethodServiceImplTest {
             mockPaymentMethod.setName("Test COD");
             mockPaymentMethod.setDescription("Test Description");
             mockPaymentMethod.setProcessingFee(BigDecimal.valueOf(5000));
-            mockPaymentMethod.setDeletedAt(null); // Already active
+            mockPaymentMethod.setDeletedAt(null);
 
             when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(mockPaymentMethod));
 
@@ -539,298 +495,593 @@ class PaymentMethodServiceImplTest {
 
     }
 
-
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Success with all payment method types and order counts")
-//    void testGetAllPaymentMethodsWithOrderCounts_Success() {
-//        // Arrange
-//        setupMockData();
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(mockOrderData);
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert
-//        assertThat(result).hasSize(3);
-//
-//        // Verify COD payment method
-//        PaymentMethodDetailsDTO codDto = result.stream()
-//                .filter(dto -> dto.getId().equals(paymentMethodId1.toString()))
-//                .findFirst()
-//                .orElseThrow();
-//
-//        assertThat(codDto.getName()).isEqualTo("Cash on Delivery");
-//        assertThat(codDto.getMethodType()).isEqualTo("COD");
-//        assertThat(codDto.getInstructions()).isEqualTo("Pay when the order arrives");
-//        assertThat(codDto.getOrderCount()).isEqualTo(2); // 2 orders use COD
-//
-//        // Verify Bank Transfer payment method
-//        PaymentMethodDetailsDTO bankTransferDto = result.stream()
-//                .filter(dto -> dto.getId().equals(paymentMethodId2.toString()))
-//                .findFirst()
-//                .orElseThrow();
-//
-//        assertThat(bankTransferDto.getName()).isEqualTo("Bank Transfer");
-//        assertThat(bankTransferDto.getMethodType()).isEqualTo("BANK_TRANSFER");
-//        assertThat(bankTransferDto.getInstructions()).isNull(); // Bank transfer has no instructions
-//        assertThat(bankTransferDto.getOrderCount()).isEqualTo(1); // 1 order uses Bank Transfer
-//
-//        // Verify E-Wallet payment method
-//        PaymentMethodDetailsDTO eWalletDto = result.stream()
-//                .filter(dto -> dto.getId().equals(paymentMethodId3.toString()))
-//                .findFirst()
-//                .orElseThrow();
-//
-//        assertThat(eWalletDto.getName()).isEqualTo("E-Wallet Payment");
-//        assertThat(eWalletDto.getMethodType()).isEqualTo("E_WALLET");
-//        assertThat(eWalletDto.getInstructions()).isEqualTo("Use mobile app to pay");
-//        assertThat(eWalletDto.getOrderCount()).isEqualTo(0); // No orders use E-Wallet
-//
-//        // Verify repository and service calls
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - OrderService throws exception")
-//    void testGetAllPaymentMethodsWithOrderCounts_OrderServiceException() {
-//        // Arrange
-//        setupMockData();
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenThrow(new RuntimeException("Order service unavailable"));
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert - Should return payment methods with 0 order counts due to exception
-//        assertThat(result).hasSize(3);
-//
-//        result.forEach(dto -> {
-//            assertThat(dto.getOrderCount()).isEqualTo(0);
-//            assertThat(dto.getId()).isNotNull();
-//            assertThat(dto.getName()).isNotNull();
-//            assertThat(dto.getMethodType()).isNotNull();
-//        });
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-//
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - OrderService returns empty list")
-//    void testGetAllPaymentMethodsWithOrderCounts_OrderServiceReturnsEmptyList() {
-//        // Arrange
-//        setupMockData();
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(Collections.emptyList());
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert - Should return payment methods with 0 order counts
-//        assertThat(result).hasSize(3);
-//
-//        result.forEach(dto -> {
-//            assertThat(dto.getOrderCount()).isEqualTo(0);
-//            assertThat(dto.getId()).isNotNull();
-//            assertThat(dto.getName()).isNotNull();
-//            assertThat(dto.getMethodType()).isNotNull();
-//        });
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-//
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Empty payment methods list")
-//    void testGetAllPaymentMethodsWithOrderCounts_EmptyPaymentMethods() {
-//        // Arrange
-//        setupMockData();
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(Collections.emptyList());
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(mockOrderData);
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert
-//        assertThat(result).isEmpty();
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Orders with null payment method IDs are filtered out")
-//    void testGetAllPaymentMethodsWithOrderCounts_NullPaymentMethodIds() {
-//        // Arrange
-//        setupMockData();
-//
-//        // Create orders where all have null payment method IDs
-//        List<OrderData> ordersWithNullPaymentMethods = Arrays.asList(
-//                createOrderWithPaymentMethodId(null),
-//                createOrderWithPaymentMethodId(null),
-//                createOrderWithPaymentMethodId(null)
-//        );
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(ordersWithNullPaymentMethods);
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert - All payment methods should have 0 order count since all orders have null payment method IDs
-//        assertThat(result).hasSize(3);
-//
-//        result.forEach(dto -> {
-//            assertThat(dto.getOrderCount()).isEqualTo(0);
-//        });
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
+    @Test
+    void testGetCurrentUserId_Success() {
+        UUID result = paymentMethodService.getCurrentUserId();
+        assertEquals(USER_ID, result);
+    }
 
     @Test
-//    @DisplayName("determinePaymentMethodTypeString - Unknown payment method type throws exception")
-//    void testDeterminePaymentMethodTypeString_UnknownType() {
-//        // Arrange
-//        PaymentMethod unknownPaymentMethod = mock(PaymentMethod.class);
-//        when(unknownPaymentMethod.getId()).thenReturn(UUID.randomUUID());
-//        when(unknownPaymentMethod.getName()).thenReturn("Unknown Payment");
-//
-//        List<PaymentMethod> paymentMethodsWithUnknown = Arrays.asList(unknownPaymentMethod);
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(paymentMethodsWithUnknown);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(Collections.emptyList());
-//
-//        // Act & Assert
-//        assertThatThrownBy(() -> paymentMethodService.getAllPaymentMethodsWithOrderCounts(request))
-//                .isInstanceOf(IllegalArgumentException.class)
-//                .hasMessageContaining("Unknown PaymentMethod subclass:");
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
+    void testGetCurrentUserId_NoAuthentication() {
+        when(securityContext.getAuthentication()).thenReturn(null);
 
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - Mixed scenario with various order counts")
-//    void testGetAllPaymentMethodsWithOrderCounts_MixedScenario() {
-//        // Arrange
-//        setupMockData();
-//
-//        // Create additional orders to test different scenarios
-//        List<OrderData> mixedOrders = Arrays.asList(
-//                createOrderWithPaymentMethodId(paymentMethodId1), // COD
-//                createOrderWithPaymentMethodId(paymentMethodId1), // COD
-//                createOrderWithPaymentMethodId(paymentMethodId1), // COD
-//                createOrderWithPaymentMethodId(paymentMethodId2), // Bank Transfer
-//                createOrderWithPaymentMethodId(paymentMethodId2), // Bank Transfer
-//                createOrderWithPaymentMethodId(paymentMethodId3), // E-Wallet
-//                createOrderWithPaymentMethodId(null), // Should be filtered out
-//                createOrderWithPaymentMethodId(UUID.randomUUID()) // Non-existent payment method ID
-//        );
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(mockPaymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(mixedOrders);
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert
-//        assertThat(result).hasSize(3);
-//
-//        // Check COD (should have 3 orders)
-//        PaymentMethodDetailsDTO codDto = result.stream()
-//                .filter(dto -> dto.getId().equals(paymentMethodId1.toString()))
-//                .findFirst()
-//                .orElseThrow();
-//        assertThat(codDto.getOrderCount()).isEqualTo(3);
-//
-//        // Check Bank Transfer (should have 2 orders)
-//        PaymentMethodDetailsDTO bankTransferDto = result.stream()
-//                .filter(dto -> dto.getId().equals(paymentMethodId2.toString()))
-//                .findFirst()
-//                .orElseThrow();
-//        assertThat(bankTransferDto.getOrderCount()).isEqualTo(2);
-//
-//        // Check E-Wallet (should have 1 order)
-//        PaymentMethodDetailsDTO eWalletDto = result.stream()
-//                .filter(dto -> dto.getId().equals(paymentMethodId3.toString()))
-//                .findFirst()
-//                .orElseThrow();
-//        assertThat(eWalletDto.getOrderCount()).isEqualTo(1);
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-//
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - COD payment method without instructions")
-//    void testGetAllPaymentMethodsWithOrderCounts_CODWithoutInstructions() {
-//        // Arrange
-//        COD codMethodWithoutInstructions = new COD();
-//        codMethodWithoutInstructions.setId(paymentMethodId1);
-//        codMethodWithoutInstructions.setName("Cash on Delivery");
-//        // Not setting instructions (will be null)
-//
-//        List<PaymentMethod> paymentMethods = Arrays.asList(codMethodWithoutInstructions);
-//        List<OrderData> orders = Arrays.asList(createOrderWithPaymentMethodId(paymentMethodId1));
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(paymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(orders);
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert
-//        assertThat(result).hasSize(1);
-//        PaymentMethodDetailsDTO dto = result.get(0);
-//        assertThat(dto.getInstructions()).isNull();
-//        assertThat(dto.getOrderCount()).isEqualTo(1);
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-
-//    @Test
-//    @DisplayName("getAllPaymentMethodsWithOrderCounts - EWallet payment method without instructions")
-//    void testGetAllPaymentMethodsWithOrderCounts_EWalletWithoutInstructions() {
-//        // Arrange
-//        EWallet eWalletMethodWithoutInstructions = new EWallet();
-//        eWalletMethodWithoutInstructions.setId(paymentMethodId3);
-//        eWalletMethodWithoutInstructions.setName("E-Wallet Payment");
-//        // Not setting instructions (will be null)
-//
-//        List<PaymentMethod> paymentMethods = Arrays.asList(eWalletMethodWithoutInstructions);
-//        List<OrderData> orders = Arrays.asList(createOrderWithPaymentMethodId(paymentMethodId3));
-//
-//        when(paymentMethodRepository.findAll()).thenReturn(paymentMethods);
-//        when(orderServiceClient.getAllOrders(request)).thenReturn(orders);
-//
-//        // Act
-//        List<PaymentMethodDetailsDTO> result = paymentMethodService.getAllPaymentMethodsWithOrderCounts(request);
-//
-//        // Assert
-//        assertThat(result).hasSize(1);
-//        PaymentMethodDetailsDTO dto = result.get(0);
-//        assertThat(dto.getInstructions()).isNull();
-//        assertThat(dto.getOrderCount()).isEqualTo(1);
-//
-//        verify(paymentMethodRepository).findAll();
-//        verify(orderServiceClient).getAllOrders(request);
-//    }
-
-    // Helper method to create OrderData with specific payment method ID
-    private OrderData createOrderWithPaymentMethodId(UUID paymentMethodId) {
-        OrderData order = new OrderData();
-        order.setId(UUID.randomUUID());
-        order.setPaymentMethodId(paymentMethodId);
-        order.setItemName("Test Item");
-        return order;
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> paymentMethodService.getCurrentUserId());
+        assertEquals("User not authenticated", exception.getMessage());
     }
+
+    @Test
+    void testGetCurrentUserId_NotAuthenticated() {
+        when(authentication.isAuthenticated()).thenReturn(false);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> paymentMethodService.getCurrentUserId());
+        assertEquals("User not authenticated", exception.getMessage());
+    }
+
+    @Test
+    void testGetCurrentUserId_InvalidPrincipal() {
+        when(authentication.getPrincipal()).thenReturn(123);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> paymentMethodService.getCurrentUserId());
+        assertEquals("Cannot extract user id from principal", exception.getMessage());
+    }
+
+    @Test
+    void testCreatePaymentMethod_COD_Success() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setName("COD Payment");
+        dto.setDescription("Cash on delivery");
+        dto.setProcessingFee(BigDecimal.valueOf(5000));
+        dto.setPaymentMethod("COD");
+        dto.setPhoneNumber("081234567890");
+        dto.setInstructions("Call before delivery");
+
+        COD savedCod = new COD();
+        savedCod.setId(PAYMENT_METHOD_ID);
+        savedCod.setName(dto.getName());
+        savedCod.setDescription(dto.getDescription());
+        savedCod.setProcessingFee(dto.getProcessingFee());
+        savedCod.setCreatedBy(USER_ID);
+        savedCod.setPhoneNumber(dto.getPhoneNumber());
+        savedCod.setInstructions(dto.getInstructions());
+
+        when(paymentMethodRepository.save(any(COD.class))).thenReturn(savedCod);
+
+        PaymentMethodDTO result = paymentMethodService.createPaymentMethod(dto);
+
+        assertNotNull(result);
+        assertTrue(result instanceof CodDTO);
+        assertEquals(dto.getName(), result.getName());
+        verify(paymentMethodRepository).save(any(COD.class));
+    }
+
+    @Test
+    void testCreatePaymentMethod_BankTransfer_Success() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setName("Bank Transfer");
+        dto.setDescription("Transfer via bank");
+        dto.setProcessingFee(BigDecimal.valueOf(2500));
+        dto.setPaymentMethod("BANK_TRANSFER");
+        dto.setAccountName("John Doe");
+        dto.setAccountNumber("1234567890");
+        dto.setBankName("Bank ABC");
+
+        BankTransfer savedBt = new BankTransfer();
+        savedBt.setId(PAYMENT_METHOD_ID);
+        savedBt.setName(dto.getName());
+        savedBt.setDescription(dto.getDescription());
+        savedBt.setProcessingFee(dto.getProcessingFee());
+        savedBt.setCreatedBy(USER_ID);
+        savedBt.setAccountName(dto.getAccountName());
+        savedBt.setAccountNumber(dto.getAccountNumber());
+        savedBt.setBankName(dto.getBankName());
+
+        when(paymentMethodRepository.save(any(BankTransfer.class))).thenReturn(savedBt);
+
+        PaymentMethodDTO result = paymentMethodService.createPaymentMethod(dto);
+
+        assertNotNull(result);
+        assertTrue(result instanceof BankTransferDTO);
+        assertEquals(dto.getName(), result.getName());
+        verify(paymentMethodRepository).save(any(BankTransfer.class));
+    }
+
+    @Test
+    void testCreatePaymentMethod_EWallet_Success() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setName("E-Wallet");
+        dto.setDescription("Digital wallet payment");
+        dto.setProcessingFee(BigDecimal.valueOf(1000));
+        dto.setPaymentMethod("E_WALLET");
+        dto.setAccountName("Jane Doe");
+        dto.setVirtualAccountNumber("9876543210");
+        dto.setInstructions("Use mobile app");
+
+        EWallet savedEw = new EWallet();
+        savedEw.setId(PAYMENT_METHOD_ID);
+        savedEw.setName(dto.getName());
+        savedEw.setDescription(dto.getDescription());
+        savedEw.setProcessingFee(dto.getProcessingFee());
+        savedEw.setCreatedBy(USER_ID);
+        savedEw.setAccountName(dto.getAccountName());
+        savedEw.setVirtualAccountNumber(dto.getVirtualAccountNumber());
+        savedEw.setInstructions(dto.getInstructions());
+
+        when(paymentMethodRepository.save(any(EWallet.class))).thenReturn(savedEw);
+
+        PaymentMethodDTO result = paymentMethodService.createPaymentMethod(dto);
+
+        assertNotNull(result);
+        assertTrue(result instanceof EWalletDTO);
+        assertEquals(dto.getName(), result.getName());
+        verify(paymentMethodRepository).save(any(EWallet.class));
+    }
+
+    @Test
+    void testCreatePaymentMethod_Exception() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setPaymentMethod("COD");
+
+        when(paymentMethodRepository.save(any())).thenThrow(new RuntimeException("Database error"));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> paymentMethodService.createPaymentMethod(dto));
+        assertTrue(exception.getMessage().contains("Failed to create payment method"));
+    }
+
+    @Test
+    void testActivatePaymentMethod_Success() {
+        COD paymentMethod = new COD();
+        paymentMethod.setId(PAYMENT_METHOD_ID);
+        paymentMethod.setName("COD");
+        paymentMethod.setDeletedAt(Timestamp.valueOf(LocalDateTime.now())); // Soft deleted
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(paymentMethod));
+        when(paymentMethodRepository.save(any())).thenReturn(paymentMethod);
+
+        PaymentMethodDTO result = paymentMethodService.activatePaymentMethod(PAYMENT_METHOD_ID.toString());
+
+        assertNotNull(result);
+        verify(paymentMethodRepository).save(paymentMethod);
+        assertNull(paymentMethod.getDeletedAt());
+    }
+
+    @Test
+    void testActivatePaymentMethod_NotFound() {
+        when(paymentMethodRepository.findById(any())).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.activatePaymentMethod(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("Payment method not found"));
+    }
+
+    @Test
+    void testActivatePaymentMethod_AlreadyActive() {
+        COD paymentMethod = new COD();
+        paymentMethod.setId(PAYMENT_METHOD_ID);
+        paymentMethod.setDeletedAt(null);
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(paymentMethod));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.activatePaymentMethod(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("already active"));
+    }
+
+    @Test
+    void testUpdatePaymentMethod_COD_TypeMismatch() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setPaymentMethod("COD");
+
+        BankTransfer existingMethod = new BankTransfer(); // Different type
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(existingMethod));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> paymentMethodService.updatePaymentMethod(PAYMENT_METHOD_ID, dto));
+        assertTrue(exception.getMessage().contains("Mismatched type: expected COD"));
+    }
+
+    @Test
+    void testUpdatePaymentMethod_BankTransfer_TypeMismatch() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setPaymentMethod("BANK_TRANSFER");
+
+        COD existingMethod = new COD(); // Different type
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(existingMethod));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> paymentMethodService.updatePaymentMethod(PAYMENT_METHOD_ID, dto));
+        assertTrue(exception.getMessage().contains("Mismatched type: expected BankTransfer"));
+    }
+
+    @Test
+    void testUpdatePaymentMethod_EWallet_TypeMismatch() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+        dto.setPaymentMethod("E_WALLET");
+
+        COD existingMethod = new COD(); // Different type
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(existingMethod));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> paymentMethodService.updatePaymentMethod(PAYMENT_METHOD_ID, dto));
+        assertTrue(exception.getMessage().contains("Mismatched type: expected EWallet"));
+    }
+
+    @Test
+    void testUpdatePaymentMethod_NotFound() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.updatePaymentMethod(PAYMENT_METHOD_ID, dto));
+        assertTrue(exception.getMessage().contains("Payment method not found"));
+    }
+
+    @Test
+    void testUpdatePaymentMethod_Deleted() {
+        PaymentMethodRegisterDTO dto = new PaymentMethodRegisterDTO();
+
+        COD existingMethod = new COD();
+        existingMethod.setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(existingMethod));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.updatePaymentMethod(PAYMENT_METHOD_ID, dto));
+        assertTrue(exception.getMessage().contains("Payment method not found"));
+    }
+
+    @Test
+    void testFindAllActivePaymentMethods() {
+        List<PaymentMethod> methods = Arrays.asList(new COD(), new BankTransfer());
+        when(paymentMethodRepository.findByDeletedAtNull()).thenReturn(methods);
+
+        List<PaymentMethodUserDTO> result = paymentMethodService.findAllActivePaymentMethods();
+
+        assertEquals(2, result.size());
+        verify(paymentMethodRepository).findByDeletedAtNull();
+    }
+
+    @Test
+    void testFindAllPaymentMethods() {
+        List<PaymentMethod> methods = Arrays.asList(new COD(), new BankTransfer());
+        when(paymentMethodRepository.findAll()).thenReturn(methods);
+
+        List<PaymentMethodDTO> result = paymentMethodService.findAllPaymentMethods();
+
+        assertEquals(2, result.size());
+        verify(paymentMethodRepository).findAll();
+    }
+
+    @Test
+    void testFindPaymentMethodById_Success() {
+        COD method = new COD();
+        method.setId(PAYMENT_METHOD_ID);
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(method));
+
+        PaymentMethodDTO result = paymentMethodService.findPaymentMethodById(PAYMENT_METHOD_ID.toString());
+
+        assertNotNull(result);
+        verify(paymentMethodRepository).findById(PAYMENT_METHOD_ID);
+    }
+
+    @Test
+    void testFindPaymentMethodById_NotFound() {
+        when(paymentMethodRepository.findById(any())).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.findPaymentMethodById(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("Payment method not found"));
+    }
+
+    @Test
+    void testDeletePaymentMethod_Success() {
+        COD method = new COD();
+        method.setId(PAYMENT_METHOD_ID);
+        method.setDeletedAt(null);
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(method));
+        when(paymentMethodRepository.save(any())).thenReturn(method);
+
+        Map<String, Object> result = paymentMethodService.deletePaymentMethod(PAYMENT_METHOD_ID.toString());
+
+        assertNotNull(result);
+        assertEquals(PAYMENT_METHOD_ID, result.get("id"));
+        assertNotNull(result.get("deleted_at"));
+        verify(paymentMethodRepository).save(method);
+    }
+
+    @Test
+    void testDeletePaymentMethod_NotFound() {
+        when(paymentMethodRepository.findById(any())).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.deletePaymentMethod(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("Payment method not found"));
+    }
+
+    @Test
+    void testDeletePaymentMethod_AlreadyDeleted() {
+        COD method = new COD();
+        method.setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(method));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.deletePaymentMethod(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("already deleted"));
+    }
+
+    @Test
+    void testFindActivePaymentMethodsByType_COD() {
+        List<COD> codMethods = Arrays.asList(new COD());
+        when(codRepository.findAllByDeletedAtIsNull()).thenReturn(codMethods);
+
+        List<PaymentMethodUserDTO> result = paymentMethodService.findActivePaymentMethodsByType("COD");
+
+        assertEquals(1, result.size());
+        verify(codRepository).findAllByDeletedAtIsNull();
+    }
+
+    @Test
+    void testFindActivePaymentMethodsByType_BankTransfer() {
+        List<BankTransfer> btMethods = Arrays.asList(new BankTransfer());
+        when(bankTransferRepository.findAllByDeletedAtIsNull()).thenReturn(btMethods);
+
+        List<PaymentMethodUserDTO> result = paymentMethodService.findActivePaymentMethodsByType("BANK_TRANSFER");
+
+        assertEquals(1, result.size());
+        verify(bankTransferRepository).findAllByDeletedAtIsNull();
+    }
+
+    @Test
+    void testFindActivePaymentMethodsByType_EWallet() {
+        List<EWallet> ewMethods = Arrays.asList(new EWallet());
+        when(eWalletRepository.findAllByDeletedAtIsNull()).thenReturn(ewMethods);
+
+        List<PaymentMethodUserDTO> result = paymentMethodService.findActivePaymentMethodsByType("E_WALLET");
+
+        assertEquals(1, result.size());
+        verify(eWalletRepository).findAllByDeletedAtIsNull();
+    }
+
+    @Test
+    void testFindActivePaymentMethodsByType_Invalid() {
+        List<PaymentMethodUserDTO> result = paymentMethodService.findActivePaymentMethodsByType("INVALID");
+
+        assertNull(result);
+    }
+
+    @Test
+    void testFindByTypeForAdmin_COD() {
+        List<COD> codMethods = Arrays.asList(new COD());
+        when(codRepository.findAll()).thenReturn(codMethods);
+
+        List<PaymentMethodDTO> result = paymentMethodService.findByTypeForAdmin("COD");
+
+        assertEquals(1, result.size());
+        verify(codRepository).findAll();
+    }
+
+    @Test
+    void testFindByTypeForAdmin_BankTransfer() {
+        List<BankTransfer> btMethods = Arrays.asList(new BankTransfer());
+        when(bankTransferRepository.findAll()).thenReturn(btMethods);
+
+        List<PaymentMethodDTO> result = paymentMethodService.findByTypeForAdmin("BANK_TRANSFER");
+
+        assertEquals(1, result.size());
+        verify(bankTransferRepository).findAll();
+    }
+
+    @Test
+    void testFindByTypeForAdmin_EWallet() {
+        List<EWallet> ewMethods = Arrays.asList(new EWallet());
+        when(eWalletRepository.findAll()).thenReturn(ewMethods);
+
+        List<PaymentMethodDTO> result = paymentMethodService.findByTypeForAdmin("E_WALLET");
+
+        assertEquals(1, result.size());
+        verify(eWalletRepository).findAll();
+    }
+
+    @Test
+    void testFindByTypeForAdmin_Invalid() {
+        List<PaymentMethodDTO> result = paymentMethodService.findByTypeForAdmin("INVALID");
+
+        assertNull(result);
+    }
+
+    @Test
+    void testFindActivePaymentMethodById_Success() {
+        COD method = new COD();
+        method.setId(PAYMENT_METHOD_ID);
+        method.setDeletedAt(null);
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(method));
+
+        PaymentMethodUserDTO result = paymentMethodService.findActivePaymentMethodById(PAYMENT_METHOD_ID.toString());
+
+        assertNotNull(result);
+        verify(paymentMethodRepository).findById(PAYMENT_METHOD_ID);
+    }
+
+    @Test
+    void testFindActivePaymentMethodById_NotFound() {
+        when(paymentMethodRepository.findById(any())).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.findActivePaymentMethodById(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("Payment method not found"));
+    }
+
+    @Test
+    void testFindActivePaymentMethodById_Deleted() {
+        COD method = new COD();
+        method.setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        when(paymentMethodRepository.findById(PAYMENT_METHOD_ID)).thenReturn(Optional.of(method));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> paymentMethodService.findActivePaymentMethodById(PAYMENT_METHOD_ID.toString()));
+        assertTrue(exception.getMessage().contains("Active payment method not found"));
+    }
+
+    @Test
+    void testConvertToDTO_UnknownType() {
+        PaymentMethod unknownMethod = new PaymentMethod() {
+        };
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> paymentMethodService.convertToDTO(unknownMethod));
+        assertEquals("Payment method not found", exception.getMessage());
+    }
+
+    @Test
+    void testConvertToUserDTO_UnknownType() {
+        PaymentMethod unknownMethod = new PaymentMethod() {
+        };
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> paymentMethodService.convertToUserDTO(unknownMethod));
+        assertEquals("Payment method not found", exception.getMessage());
+    }
+
+
+
+    @Test
+    @DisplayName("Test determinePaymentMethodTypeString - COD")
+    void testDeterminePaymentMethodTypeString_COD() {
+        COD cod = mock(COD.class);
+        String result = paymentMethodService.determinePaymentMethodTypeString(cod);
+        assertThat(result).isEqualTo("COD");
+    }
+
+
+    @Test
+    @DisplayName("Test determinePaymentMethodTypeString - Unknown Type")
+    void testDeterminePaymentMethodTypeString_UnknownType() {
+        PaymentMethod unknownPayment = mock(PaymentMethod.class);
+        assertThatThrownBy(() ->
+                paymentMethodService.determinePaymentMethodTypeString(unknownPayment)
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unknown PaymentMethod subclass");
+    }
+
+
+    @Test
+    void getCurrentUserId_NotAuthenticated() {
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(null);
+
+            RuntimeException exception = assertThrows(RuntimeException.class,
+                    () -> paymentMethodService.getCurrentUserId());
+            assertEquals("User not authenticated", exception.getMessage());
+        }
+    }
+
+    @Test
+    void getCurrentUserId_NotAuthenticatedFalse() {
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(false);
+
+            RuntimeException exception = assertThrows(RuntimeException.class,
+                    () -> paymentMethodService.getCurrentUserId());
+            assertEquals("User not authenticated", exception.getMessage());
+        }
+    }
+
+    @Test
+    void getCurrentUserId_InvalidPrincipal() {
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn(123); // Not a String
+
+            RuntimeException exception = assertThrows(RuntimeException.class,
+                    () -> paymentMethodService.getCurrentUserId());
+            assertEquals("Cannot extract user id from principal", exception.getMessage());
+        }
+    }
+
+
+
+
+    @Nested
+    class GetAllPaymentMethodsWithOrderCountsSynchronousWrapperTest {
+
+        @Test
+        void getAllPaymentMethodsWithOrderCounts_Success() {
+            CompletableFuture<List<PaymentMethodDetailsDTO>> successfulFuture = CompletableFuture.completedFuture(sampleDTOList);
+
+            doReturn(successfulFuture).when(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+
+            List<PaymentMethodDetailsDTO> result = paymentMethodServiceSpy.getAllPaymentMethodsWithOrderCounts(mockRequest);
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals("Test Method", result.get(0).getName());
+            assertEquals(10, result.get(0).getOrderCount());
+            verify(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+        }
+
+        @Test
+        void getAllPaymentMethodsWithOrderCounts_Timeout() {
+            CompletableFuture<List<PaymentMethodDetailsDTO>> unendingFuture = new CompletableFuture<>();
+
+            doReturn(unendingFuture).when(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+                paymentMethodServiceSpy.getAllPaymentMethodsWithOrderCounts(mockRequest);
+            });
+
+            assertTrue(exception.getMessage().contains("Service timeout - external service too slow"));
+            verify(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+        }
+
+        @Test
+        void getAllPaymentMethodsWithOrderCounts_ExecutionException() {
+            CompletableFuture<List<PaymentMethodDetailsDTO>> failedFuture = new CompletableFuture<>();
+            failedFuture.completeExceptionally(new ExecutionException("Async task failed", new RuntimeException("Original service error")));
+
+            doReturn(failedFuture).when(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+                paymentMethodServiceSpy.getAllPaymentMethodsWithOrderCounts(mockRequest);
+            });
+
+            assertTrue(exception.getMessage().contains("Service error"));
+            verify(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+        }
+
+        @Test
+        void getAllPaymentMethodsWithOrderCounts_InterruptedException() {
+            CompletableFuture<List<PaymentMethodDetailsDTO>> interruptedFuture = new CompletableFuture<>();
+            interruptedFuture.completeExceptionally(new InterruptedException("Thread was interrupted"));
+
+            doReturn(interruptedFuture).when(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+                paymentMethodServiceSpy.getAllPaymentMethodsWithOrderCounts(mockRequest);
+            });
+
+            assertTrue(exception.getMessage().contains("Service error"));
+            verify(paymentMethodServiceSpy).getAllPaymentMethodsWithOrderCountsAsync(mockRequest);
+        }
+    }
+
+
 
 }

@@ -115,6 +115,10 @@ Diagram status menggambarkan siklus hidup payment method, termasuk status ACTIVE
 > Poin pentingnya, fitur statistik (counts penggunaan metode pembayaran) untuk admin sudah berjalan secara asynchronous menggunakan `CompletableFuture` saat berinteraksi dengan Order Service, menjaga API tetap responsif. 
 > Persiapan untuk monitoring log menggunakan Grafana dan Prometheus juga sudah sejalan dengan rencana teknis, dan konfigurasi aplikasi dikelola melalui kode, mendukung prinsip IaC.
 
+![TDD](img/JacocoTest.png)
+
+![Sonar_Cloud](img/SonarCloud.png)
+
 ---
 
 📌 **Progress Milestone 50%**
@@ -235,6 +239,10 @@ Profiling menghasilkan visualisasi seperti Flame Graph yang menunjukkan waktu CP
 - Prometheus meng-scrape endpoint /actuator/prometheus secara berkala setiap 3 detik (dikonfigurasi di prometheus.yml).
 
 - Grafana membaca data dari Prometheus datasource dan menampilkan metrik seperti JVM memory usage, CPU load, HTTP request rates dalam bentuk grafik dan panel interaktif.
+
+![MONITORING](img/monitoring3.png)
+
+============================================================================================
 
 ![MONITORING](img/monitoring1.png)
 
